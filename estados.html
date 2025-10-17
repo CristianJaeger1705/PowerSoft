@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Powersoft - Estados Financieros</title>
+  <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+  <div class="topbar"><div>Estados financieros</div><div><a href="index.html">Menú</a></div></div>
+  <main class="container">
+    <section class="card">
+      <h3>Opciones</h3>
+      <button id="calcGlobal">Generar Balance (Método Global)</button>
+      <button id="calcClasificado">Generar Balance Clasificado</button>
+      <button id="calcEr">Generar Estado de Resultados</button>
+    </section>
+
+    <section class="card">
+      <h3>Resultado</h3>
+      <div id="output"></div>
+    </section>
+  </main>
+
+  <script>
+    const API = 'http://localhost:3000';
+    if (!sessionStorage.getItem('ps_user')) location.href='login.html';
+
+    async function loadData(){
+      const [accRes, jRes] = await Promise.all([fetch(API + '/accounts'), fetch(API + '/journals')]);
+      const accounts = await accRes.json();
+      const journals = await jRes.json();
+      return {accounts, journals};
+    }
+
+    // calcula saldo por cuenta (debe - haber)
+    function computeBalances(accounts, journals) {
+      const balances = {};
+      for (const a of accounts) balances[a.id] = { account: a, balance: 0 };
+      for (const j of journals) {
+        for (const e of j.entries) {
+          if (!balances[e.accountId]) continue;
+          balances[e.accountId].balance += (e.debit || 0) - (e.credit || 0);
+        }
+      }
+      return balances;
+    }
+
+    // Balance Global (totales)
+    document.getElementById('calcGlobal').addEventListener('click', async () => {
+      const {accounts, journals} = await loadData();
+      const balances = computeBalances(accounts, journals);
+      let activo = 0, pasivo = 0, patrimonio = 0;
+      for (const id in balances) {
+        const acc = balances[id].account;
+        const b = balances[id].balance;
+        if (acc.type === 'activo') activo += b;
+        if (acc.type === 'pasivo') pasivo += b;
+        if (acc.type === 'patrimonio') patrimonio += b;
+        // ingresos, costos y gastos influyen en patrimonio por cierre (aquí no cerramos)
+      }
+      const out = document.getElementById('output');
+      out.innerHTML = `<h4>Balance - Método Global</h4>
+        <table><tr><th>Rubro</th><th>Monto</th></tr>
+        <tr><td>Activo Total</td><td>${activo.toFixed(2)}</td></tr>
+        <tr><td>Pasivo Total</td><td>${pasivo.toFixed(2)}</td></tr>
+        <tr><td>Patrimonio</td><td>${patrimonio.toFixed(2)}</td></tr>
+        </table>`;
+    });
+
+    // Balance Clasificado
+    document.getElementById('calcClasificado').addEventListener('click', async ()=>{
+      const {accounts, journals} = await loadData();
+      const balances = computeBalances(accounts, journals);
+      // agrupar por tipo y subtipo
+      const grouped = {};
+      for (const id in balances) {
+        const acc = balances[id].account;
+        const b = balances[id].balance;
+        const key = acc.type + (acc.subtype ? '|' + acc.subtype : '');
+        if (!grouped[key]) grouped[key] = 0;
+        grouped[key] += b;
+      }
+      const out = document.getElementById('output');
+      let html = `<h4>Balance - Clasificado</h4><table><tr><th>Rubro</th><th>Monto</th></tr>`;
+      for (const k in grouped) {
+        html += `<tr><td>${k.replace('|',' - ')}</td><td>${grouped[k].toFixed(2)}</td></tr>`;
+      }
+      html += `</table>`;
+      out.innerHTML = html;
+    });
+
+    // Estado de Resultados (Ingresos - Costos - Gastos)
+    document.getElementById('calcEr').addEventListener('click', async ()=>{
+      const {accounts, journals} = await loadData();
+      const balances = computeBalances(accounts, journals);
+      let ingresos = 0, costos = 0, gastos = 0;
+      for (const id in balances) {
+        const acc = balances[id].account;
+        const b = balances[id].balance;
+        if (acc.type === 'ingreso') ingresos += -b; // usualmente ingresos tienen saldo acreedor; ajustamos señal
+        if (acc.type === 'costo') costos += b;
+        if (acc.type === 'gasto') gastos += b;
+      }
+      const utilidad = ingresos - costos - gastos;
+      const out = document.getElementById('output');
+      out.innerHTML = `<h4>Estado de Resultados</h4>
+        <table><tr><td>Ingresos</td><td>${ingresos.toFixed(2)}</td></tr>
+        <tr><td>(-) Costos</td><td>${costos.toFixed(2)}</td></tr>
+        <tr><td>(-) Gastos</td><td>${gastos.toFixed(2)}</td></tr>
+        <tr><th>Utilidad Neta</th><th>${utilidad.toFixed(2)}</th></tr></table>`;
+    });
+
+  </script>
+</body>
+</html>

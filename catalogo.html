@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Powersoft - Catálogo de cuentas</title>
+  <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div>Catálogo de cuentas</div>
+    <div><a href="index.html">Menú</a></div>
+  </div>
+
+  <main class="container">
+    <section class="card">
+      <h3>Lista de cuentas</h3>
+      <table id="accountsTable">
+        <thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Subtipo</th><th>Acciones</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h3>Agregar / Editar cuenta</h3>
+      <form id="accountForm">
+        <input type="hidden" id="accId" />
+        <label>Código<input id="accCode" required /></label>
+        <label>Nombre<input id="accName" required /></label>
+        <label>Tipo
+          <select id="accType" required>
+            <option value="activo">Activo</option>
+            <option value="pasivo">Pasivo</option>
+            <option value="patrimonio">Patrimonio</option>
+            <option value="ingreso">Ingreso</option>
+            <option value="costo">Costo</option>
+            <option value="gasto">Gasto</option>
+          </select>
+        </label>
+        <label>Subtipo (ej. corriente, no corriente)<input id="accSub" /></label>
+        <button type="submit">Guardar</button>
+        <button type="button" id="resetBtn">Limpiar</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const API = 'http://localhost:3000';
+    const tableBody = document.querySelector('#accountsTable tbody');
+    const form = document.getElementById('accountForm');
+
+    async function fetchAccounts() {
+      const res = await fetch(API + '/accounts');
+      const list = await res.json();
+      tableBody.innerHTML = '';
+      list.sort((a,b)=>a.code.localeCompare(b.code)).forEach(a=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${a.code}</td>
+          <td>${a.name}</td>
+          <td>${a.type}</td>
+          <td>${a.subtype || ''}</td>
+          <td>
+            <button data-id="${a.id}" class="edit">Editar</button>
+            <button data-id="${a.id}" class="del">Eliminar</button>
+          </td>
+        `;
+        tableBody.appendChild(tr);
+      });
+    }
+
+    tableBody.addEventListener('click', async (e) => {
+      if (e.target.matches('.edit')) {
+        const id = e.target.dataset.id;
+        const res = await fetch(API + '/accounts/' + id);
+        const acc = await res.json();
+        document.getElementById('accId').value = acc.id;
+        document.getElementById('accCode').value = acc.code;
+        document.getElementById('accName').value = acc.name;
+        document.getElementById('accType').value = acc.type;
+        document.getElementById('accSub').value = acc.subtype || '';
+      } else if (e.target.matches('.del')) {
+        if (!confirm('Eliminar cuenta?')) return;
+        const id = e.target.dataset.id;
+        await fetch(API + '/accounts/' + id, { method:'DELETE' });
+        fetchAccounts();
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('accId').value;
+      const body = {
+        code: document.getElementById('accCode').value.trim(),
+        name: document.getElementById('accName').value.trim(),
+        type: document.getElementById('accType').value,
+        subtype: document.getElementById('accSub').value.trim()
+      };
+      if (id) {
+        await fetch(API + '/accounts/' + id, {
+          method:'PUT',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+      } else {
+        await fetch(API + '/accounts', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(body)
+        });
+      }
+      form.reset();
+      document.getElementById('accId').value = '';
+      fetchAccounts();
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      form.reset(); document.getElementById('accId').value = '';
+    });
+
+    // comprobar sesión
+    if (!sessionStorage.getItem('ps_user')) location.href = 'login.html';
+    fetchAccounts();
+  </script>
+</body>
+</html>

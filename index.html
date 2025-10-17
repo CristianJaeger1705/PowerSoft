@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Powersoft - Panel</title>
+  <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div>Powersoft - Sistema Contable</div>
+    <div>
+      <button id="logoutBtn">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <main class="container">
+    <h2>Panel principal</h2>
+
+    <nav class="menu card">
+      <a href="catalogo.html">Catálogo de cuentas</a>
+      <a href="transacciones.html">Registro de transacciones (Asientos)</a>
+      <a href="estados.html">Estados financieros (Cálculo)</a>
+      <a href="login.html" id="dummy">Reiniciar (login)</a>
+    </nav>
+
+    <section class="card">
+      <h3>Bienvenido, administrador</h3>
+      <p>En este prototipo puede administrar el catálogo de cuentas, registrar transacciones (asientos contables) y generar estados financieros (balance - global y clasificado, estado de resultados).</p>
+      <ul>
+        <li>Datos persistidos con <code>json-server</code> (db.json).</li>
+        <li>Login: <b>admin/admin</b>.</li>
+      </ul>
+    </section>
+  </main>
+
+  <script>
+    // Verificar sesión
+    const user = sessionStorage.getItem('ps_user');
+    if (!user) {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    });
+
+    // evitar que el link 'Reiniciar' quede en caché
+    document.getElementById('dummy').addEventListener('click', (e) => {
+      e.preventDefault();
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>

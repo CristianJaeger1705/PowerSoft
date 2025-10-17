@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Powersoft - Login</title>
+  <link rel="stylesheet" href="estilos.css" />
+</head>
+<body>
+  <main class="container">
+    <h1>Powersoft</h1>
+    <h2>Ingreso al sistema contable</h2>
+
+    <form id="loginForm" class="card">
+      <label>
+        Usuario
+        <input type="text" id="username" required autocomplete="username" />
+      </label>
+      <label>
+        Contraseña
+        <input type="password" id="password" required autocomplete="current-password" />
+      </label>
+      <button type="submit">Entrar</button>
+      <p class="small">Usuario: <b>admin</b> | Contraseña: <b>admin</b></p>
+      <div id="msg" class="msg"></div>
+    </form>
+
+    <footer class="foot">Powersoft - Sistema Contable (prototipo)</footer>
+  </main>
+
+  <script>
+    const form = document.getElementById('loginForm');
+    const msg = document.getElementById('msg');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value.trim();
+
+      if (u === 'admin' && p === 'admin') {
+        sessionStorage.setItem('ps_user', JSON.stringify({user: 'admin', token: 'fake-jwt'}));
+        window.location.href = 'index.html';
+      } else {
+        msg.textContent = 'Credenciales incorrectas.';
+        msg.style.color = 'crimson';
+      }
+    });
+  </script>
+</body>
+</html>
