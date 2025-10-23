@@ -5,6 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Powersoft - Transacciones</title>
   <link rel="stylesheet" href="estilos.css" />
+  <style>
+    .project-section {
+      background-color: #f0f8ff;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+    }
+    .project-section label {
+      display: inline-block;
+      margin-right: 15px;
+    }
+  </style>
 </head>
 <body>
   <div class="topbar"><div>Registro de transacciones</div><div><a href="index.html">Menú</a></div></div>
@@ -14,6 +26,20 @@
       <form id="journalForm">
         <label>Fecha<input type="date" id="jDate" required /></label>
         <label>Descripción<input id="jDesc" required /></label>
+        
+        <div class="project-section">
+          <h4>Información del Proyecto (Opcional)</h4>
+          <label>Proyecto<input id="jProject" /></label>
+          <label>Método de Costeo
+            <select id="jCostMethod">
+              <option value="">No aplica</option>
+              <option value="casos_uso">Casos de Uso</option>
+              <option value="ifpug">IFPUG</option>
+            </select>
+          </label>
+          <label>Puntos de Función<input type="number" id="jFunctionPoints" step="1" /></label>
+        </div>
+        
         <div id="entries">
           <!-- entry rows -->
         </div>
@@ -27,8 +53,19 @@
 
     <section class="card">
       <h3>Asientos registrados</h3>
+      <div class="filters">
+        <label>Filtrar por proyecto: 
+          <select id="projectFilter">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>Filtrar por fecha: 
+          <input type="date" id="dateFromFilter" /> a <input type="date" id="dateToFilter" />
+        </label>
+        <button id="applyFilters">Aplicar filtros</button>
+      </div>
       <table id="journalTable">
-        <thead><tr><th>Fecha</th><th>Descripción</th><th>Débito</th><th>Crédito</th><th>Acciones</th></tr></thead>
+        <thead><tr><th>Fecha</th><th>Descripción</th><th>Proyecto</th><th>Débito</th><th>Crédito</th><th>Acciones</th></tr></thead>
         <tbody></tbody>
       </table>
     </section>
@@ -73,24 +110,51 @@
 
     const journalTableBody = document.querySelector('#journalTable tbody');
 
-    async function fetchJournals() {
-      const res = await fetch(API + '/journals?_sort=date,id&_order=desc');
+    async function fetchJournals(filters = {}) {
+      let url = API + '/journals?_sort=date,id&_order=desc';
+      
+      // Aplicar filtros si existen
+      if (filters.project) {
+        url += `&project=${filters.project}`;
+      }
+      if (filters.dateFrom) {
+        url += `&date_gte=${filters.dateFrom}`;
+      }
+      if (filters.dateTo) {
+        url += `&date_lte=${filters.dateTo}`;
+      }
+      
+      const res = await fetch(url);
       const list = await res.json();
       journalTableBody.innerHTML = '';
       for (const j of list) {
         const totalDebit = j.entries.reduce((s,e)=>s+ (e.debit || 0),0);
         const totalCredit = j.entries.reduce((s,e)=>s+ (e.credit || 0),0);
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${j.date}</td><td>${j.desc}</td><td>${totalDebit.toFixed(2)}</td><td>${totalCredit.toFixed(2)}</td>
+        tr.innerHTML = `<td>${j.date}</td><td>${j.desc}</td><td>${j.project || ''}</td><td>${totalDebit.toFixed(2)}</td><td>${totalCredit.toFixed(2)}</td>
           <td><button data-id="${j.id}" class="del">Eliminar</button></td>`;
         journalTableBody.appendChild(tr);
       }
+    }
+
+    // Cargar proyectos para el filtro
+    async function loadProjects() {
+      const res = await fetch(API + '/journals');
+      const journals = await res.json();
+      const projects = [...new Set(journals.map(j => j.project).filter(p => p))];
+      const select = document.getElementById('projectFilter');
+      select.innerHTML = '<option value="">Todos</option>' + 
+        projects.map(p => `<option value="${p}">${p}</option>`).join('');
     }
 
     document.getElementById('journalForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const date = document.getElementById('jDate').value;
       const desc = document.getElementById('jDesc').value.trim();
+      const project = document.getElementById('jProject').value.trim();
+      const costMethod = document.getElementById('jCostMethod').value;
+      const functionPoints = document.getElementById('jFunctionPoints').value;
+      
       const rows = Array.from(document.querySelectorAll('.entryRow'));
       const entries = rows.map(r=>{
         return {
@@ -111,13 +175,18 @@
         return;
       }
 
-      const payload = { date, desc, entries };
+      const payload = { 
+        date, 
+        desc, 
+        entries,
+        project: project || null,
+        costMethod: costMethod || null,
+        functionPoints: functionPoints ? parseInt(functionPoints) : null
+      };
+      
       await fetch(API + '/journals', {
         method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
       });
-
-      // opcional: actualizar saldos de cuentas si se quiere
-      // En este diseño calculamos saldos consultando journals cuando se generan estados
 
       document.getElementById('journalForm').reset();
       entriesContainer.innerHTML = '';
@@ -125,6 +194,7 @@
       msg.textContent = 'Asiento guardado.';
       msg.style.color = 'green';
       fetchJournals();
+      loadProjects();
     });
 
     journalTableBody.addEventListener('click', async (e) => {
@@ -133,10 +203,44 @@
         const id = e.target.dataset.id;
         await fetch(API + '/journals/' + id, { method:'DELETE' });
         fetchJournals();
+        loadProjects();
       }
     });
 
+    // Aplicar filtros
+    document.getElementById('applyFilters').addEventListener('click', () => {
+      const project = document.getElementById('projectFilter').value;
+      const dateFrom = document.getElementById('dateFromFilter').value;
+      const dateTo = document.getElementById('dateToFilter').value;
+      
+      fetchJournals({ project, dateFrom, dateTo });
+    });
+
     fetchJournals();
+    loadProjects();
+
+    
+  function cargarTransaccionDesdeCosteo() {
+    const transaccionGuardada = localStorage.getItem('ultimaTransaccionCosteo');
+    if (transaccionGuardada) {
+    const transaccion = JSON.parse(transaccionGuardada);
+    
+    if (confirm(`¿Desea cargar la transacción del proyecto "${transaccion.proyecto}" por $${transaccion.precioVenta.toFixed(2)}?`)) {
+      document.getElementById('jDate').value = transaccion.fecha;
+      document.getElementById('jDesc').value = `Venta de software - ${transaccion.proyecto}`;
+      document.getElementById('jProject').value = transaccion.proyecto;
+      document.getElementById('jCostMethod').value = 'ifpug';
+      document.getElementById('jFunctionPoints').value = transaccion.puntosFuncion;
+      
+      // Limpiar localStorage después de cargar
+      localStorage.removeItem('ultimaTransaccionCosteo');
+    }
+  }
+}
+
+// Llamar al cargar la página
+window.addEventListener('load', cargarTransaccionDesdeCosteo);
+
   </script>
 </body>
 </html>

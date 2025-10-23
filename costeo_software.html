@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PowerSoft - Costeo de Software</title>
+  <link rel="stylesheet" href="estilos.css" />
+  <style>
+    .costeo-section { margin-bottom: 20px; }
+    .factor-table { width: 100%; margin: 10px 0; }
+    .factor-table th, .factor-table td { padding: 8px; text-align: center; }
+    .total-section { background: #f0f8ff; padding: 15px; border-radius: 5px; }
+    .btn-generar { background: #28a745; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div>Costeo de Software - Método IFPUG</div>
+    <div><a href="index.html">Menú</a></div>
+  </div>
+
+  <main class="container">
+    <section class="card">
+      <h3>Calculadora de Puntos de Función</h3>
+      
+      <div class="costeo-section">
+        <h4>Entradas Externas (EI)</h4>
+        <table class="factor-table">
+          <tr><th>Complejidad</th><th>Peso</th><th>Cantidad</th><th>Total</th></tr>
+          <tr><td>Baja (3)</td><td>3</td><td><input type="number" id="ei_baja" value="0" min="0"></td><td id="ei_baja_total">0</td></tr>
+          <tr><td>Media (4)</td><td>4</td><td><input type="number" id="ei_media" value="0" min="0"></td><td id="ei_media_total">0</td></tr>
+          <tr><td>Alta (6)</td><td>6</td><td><input type="number" id="ei_alta" value="0" min="0"></td><td id="ei_alta_total">0</td></tr>
+        </table>
+      </div>
+
+      <div class="costeo-section">
+        <h4>Salidas Externas (EO)</h4>
+        <table class="factor-table">
+          <tr><th>Complejidad</th><th>Peso</th><th>Cantidad</th><th>Total</th></tr>
+          <tr><td>Baja (4)</td><td>4</td><td><input type="number" id="eo_baja" value="0" min="0"></td><td id="eo_baja_total">0</td></tr>
+          <tr><td>Media (5)</td><td>5</td><td><input type="number" id="eo_media" value="0" min="0"></td><td id="eo_media_total">0</td></tr>
+          <tr><td>Alta (7)</td><td>7</td><td><input type="number" id="eo_alta" value="0" min="0"></td><td id="eo_alta_total">0</td></tr>
+        </table>
+      </div>
+
+      <div class="costeo-section">
+        <h4>Consultas Externas (EQ)</h4>
+        <table class="factor-table">
+          <tr><th>Complejidad</th><th>Peso</th><th>Cantidad</th><th>Total</th></tr>
+          <tr><td>Baja (3)</td><td>3</td><td><input type="number" id="eq_baja" value="0" min="0"></td><td id="eq_baja_total">0</td></tr>
+          <tr><td>Media (4)</td><td>4</td><td><input type="number" id="eq_media" value="0" min="0"></td><td id="eq_media_total">0</td></tr>
+          <tr><td>Alta (6)</td><td>6</td><td><input type="number" id="eq_alta" value="0" min="0"></td><td id="eq_alta_total">0</td></tr>
+        </table>
+      </div>
+
+      <div class="costeo-section">
+        <h4>Archivos Lógicos Internos (ILF)</h4>
+        <table class="factor-table">
+          <tr><th>Complejidad</th><th>Peso</th><th>Cantidad</th><th>Total</th></tr>
+          <tr><td>Baja (7)</td><td>7</td><td><input type="number" id="ilf_baja" value="0" min="0"></td><td id="ilf_baja_total">0</td></tr>
+          <tr><td>Media (10)</td><td>10</td><td><input type="number" id="ilf_media" value="0" min="0"></td><td id="ilf_media_total">0</td></tr>
+          <tr><td>Alta (15)</td><td>15</td><td><input type="number" id="ilf_alta" value="0" min="0"></td><td id="ilf_alta_total">0</td></tr>
+        </table>
+      </div>
+
+      <div class="costeo-section">
+        <h4>Archivos de Interfaz Externa (EIF)</h4>
+        <table class="factor-table">
+          <tr><th>Complejidad</th><th>Peso</th><th>Cantidad</th><th>Total</th></tr>
+          <tr><td>Baja (5)</td><td>5</td><td><input type="number" id="eif_baja" value="0" min="0"></td><td id="eif_baja_total">0</td></tr>
+          <tr><td>Media (7)</td><td>7</td><td><input type="number" id="eif_media" value="0" min="0"></td><td id="eif_media_total">0</td></tr>
+          <tr><td>Alta (10)</td><td>10</td><td><input type="number" id="eif_alta" value="0" min="0"></td><td id="eif_alta_total">0</td></tr>
+        </table>
+      </div>
+
+      <div class="costeo-section">
+        <label>Proyecto: <input type="text" id="proyecto_nombre" placeholder="Nombre del proyecto"></label>
+        <label>Costo por Punto de Función: $<input type="number" id="costo_por_punto" value="100" step="0.01"></label>
+      </div>
+
+      <div class="total-section">
+        <h4>Resumen del Costeo</h4>
+        <p>Total Puntos de Función: <span id="total_puntos">0</span></p>
+        <p>Costo Base: $<span id="costo_base">0.00</span></p>
+        <p>Margen de Ganancia (40%): $<span id="margen_ganancia">0.00</span></p>
+        <p><strong>Precio de Venta: $<span id="precio_venta">0.00</span></strong></p>
+        
+        <button class="btn-generar" id="generarTransaccion">Generar Transacción Contable</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Calcular totales en tiempo real
+    function calcularTotales() {
+      // Entradas Externas
+      const eiBaja = document.getElementById('ei_baja').value * 3;
+      const eiMedia = document.getElementById('ei_media').value * 4;
+      const eiAlta = document.getElementById('ei_alta').value * 6;
+      
+      // Salidas Externas
+      const eoBaja = document.getElementById('eo_baja').value * 4;
+      const eoMedia = document.getElementById('eo_media').value * 5;
+      const eoAlta = document.getElementById('eo_alta').value * 7;
+      
+      // Consultas Externas
+      const eqBaja = document.getElementById('eq_baja').value * 3;
+      const eqMedia = document.getElementById('eq_media').value * 4;
+      const eqAlta = document.getElementById('eq_alta').value * 6;
+      
+      // Archivos Lógicos Internos
+      const ilfBaja = document.getElementById('ilf_baja').value * 7;
+      const ilfMedia = document.getElementById('ilf_media').value * 10;
+      const ilfAlta = document.getElementById('ilf_alta').value * 15;
+      
+      // Archivos de Interfaz Externa
+      const eifBaja = document.getElementById('eif_baja').value * 5;
+      const eifMedia = document.getElementById('eif_media').value * 7;
+      const eifAlta = document.getElementById('eif_alta').value * 10;
+      
+      // Actualizar subtotales
+      document.getElementById('ei_baja_total').textContent = eiBaja;
+      document.getElementById('ei_media_total').textContent = eiMedia;
+      document.getElementById('ei_alta_total').textContent = eiAlta;
+      
+      document.getElementById('eo_baja_total').textContent = eoBaja;
+      document.getElementById('eo_media_total').textContent = eoMedia;
+      document.getElementById('eo_alta_total').textContent = eoAlta;
+      
+      document.getElementById('eq_baja_total').textContent = eqBaja;
+      document.getElementById('eq_media_total').textContent = eqMedia;
+      document.getElementById('eq_alta_total').textContent = eqAlta;
+      
+      document.getElementById('ilf_baja_total').textContent = ilfBaja;
+      document.getElementById('ilf_media_total').textContent = ilfMedia;
+      document.getElementById('ilf_alta_total').textContent = ilfAlta;
+      
+      document.getElementById('eif_baja_total').textContent = eifBaja;
+      document.getElementById('eif_media_total').textContent = eifMedia;
+      document.getElementById('eif_alta_total').textContent = eifAlta;
+      
+      // Calcular total puntos
+      const totalPuntos = eiBaja + eiMedia + eiAlta + 
+                         eoBaja + eoMedia + eoAlta + 
+                         eqBaja + eqMedia + eqAlta + 
+                         ilfBaja + ilfMedia + ilfAlta + 
+                         eifBaja + eifMedia + eifAlta;
+      
+      document.getElementById('total_puntos').textContent = totalPuntos;
+      
+      // Calcular costos y precios
+      const costoPorPunto = parseFloat(document.getElementById('costo_por_punto').value) || 0;
+      const costoBase = totalPuntos * costoPorPunto;
+      const margenGanancia = costoBase * 0.4;
+      const precioVenta = costoBase + margenGanancia;
+      
+      document.getElementById('costo_base').textContent = costoBase.toFixed(2);
+      document.getElementById('margen_ganancia').textContent = margenGanancia.toFixed(2);
+      document.getElementById('precio_venta').textContent = precioVenta.toFixed(2);
+    }
+
+    // Agregar event listeners a todos los inputs
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+      input.addEventListener('input', calcularTotales);
+    });
+
+    // Generar transacción contable
+    document.getElementById('generarTransaccion').addEventListener('click', function() {
+      const proyecto = document.getElementById('proyecto_nombre').value;
+      const precioVenta = parseFloat(document.getElementById('precio_venta').textContent);
+      const totalPuntos = parseInt(document.getElementById('total_puntos').textContent);
+      
+      if (!proyecto || precioVenta === 0) {
+        alert('Complete los datos del proyecto y asegúrese de calcular el precio de venta');
+        return;
+      }
+
+      // Guardar en localStorage para usar en transacciones
+      const transaccion = {
+        proyecto: proyecto,
+        precioVenta: precioVenta,
+        puntosFuncion: totalPuntos,
+        fecha: new Date().toISOString().split('T')[0],
+        tipo: 'venta_software'
+      };
+      
+      localStorage.setItem('ultimaTransaccionCosteo', JSON.stringify(transaccion));
+      
+      alert(`Transacción generada para el proyecto "${proyecto}"\nPrecio de venta: $${precioVenta.toFixed(2)}\n\nPuede registrar esta transacción en el módulo de transacciones.`);
+      
+      // Opcional: redirigir a transacciones
+      if (confirm('¿Desea ir al módulo de transacciones para registrar esta venta?')) {
+        window.location.href = 'transacciones.html';
+      }
+    });
+
+    // Calcular inicialmente
+    calcularTotales();
+  </script>
+</body>
+</html>

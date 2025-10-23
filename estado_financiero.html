@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerSoft - Estado Financiero Analítico</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f7fa;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #003366;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #003366;
+      color: white;
+    }
+    .total {
+      font-weight: bold;
+      text-align: right;
+      background-color: #e9f0ff;
+    }
+    .btn {
+      display: block;
+      margin: 15px auto;
+      padding: 10px 20px;
+      background-color: #003366;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0055aa;
+    }
+    .section {
+      margin-bottom: 30px;
+    }
+    .positive {
+      color: green;
+    }
+    .negative {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Estado Financiero - Método Analítico (PowerSoft)</h1>
+    
+    <div class="section">
+      <h3>Ingresos por Servicios de Software</h3>
+      <table id="tablaIngresos">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Proyecto</th>
+            <th>Método Costeo</th>
+            <th>Puntos Función</th>
+            <th>Monto ($)</th>
+          </tr>
+        </thead>
+        <tbody id="ingresosBody">
+          <!-- Se llenará dinámicamente -->
+        </tbody>
+      </table>
+      <button class="btn" onclick="agregarFila('ingresosBody')">Agregar Ingreso</button>
+    </div>
+
+    <div class="section">
+      <h3>Costos Directos de Desarrollo</h3>
+      <table id="tablaCostosDirectos">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Proyecto</th>
+            <th>Monto ($)</th>
+          </tr>
+        </thead>
+        <tbody id="costosDirectosBody">
+          <!-- Se llenará dinámicamente -->
+        </tbody>
+      </table>
+      <button class="btn" onclick="agregarFila('costosDirectosBody')">Agregar Costo Directo</button>
+    </div>
+
+    <div class="section">
+      <h3>Costos Indirectos de Fabricación (CIF)</h3>
+      <table id="tablaCIF">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Monto ($)</th>
+          </tr>
+        </thead>
+        <tbody id="cifBody">
+          <tr>
+            <td><input type="text" value="Sueldos desarrolladores" class="desc-input"></td>
+            <td><input type="number" value="800" class="monto-input"></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Licencias de software" class="desc-input"></td>
+            <td><input type="number" value="500" class="monto-input"></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Hosting y servidores" class="desc-input"></td>
+            <td><input type="number" value="300" class="monto-input"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="btn" onclick="agregarFila('cifBody')">Agregar CIF</button>
+    </div>
+
+    <div class="section">
+      <h3>Gastos Operativos</h3>
+      <table id="tablaGastos">
+        <thead>
+          <tr>
+            <th>Descripción</th>
+            <th>Monto ($)</th>
+          </tr>
+        </thead>
+        <tbody id="gastosBody">
+          <tr>
+            <td><input type="text" value="Gastos administrativos" class="desc-input"></td>
+            <td><input type="number" value="150" class="monto-input"></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Alquiler de oficina" class="desc-input"></td>
+            <td><input type="number" value="400" class="monto-input"></td>
+          </tr>
+          <tr>
+            <td><input type="text" value="Servicios (internet, electricidad)" class="desc-input"></td>
+            <td><input type="number" value="100" class="monto-input"></td>
+          </tr>
+        </tbody>
+      </table>
+      <button class="btn" onclick="agregarFila('gastosBody')">Agregar Gasto</button>
+    </div>
+
+    <button class="btn" onclick="calcularEstado()">Calcular Estado Financiero</button>
+
+    <div class="section">
+      <h3>Resultados</h3>
+      <table>
+        <tr>
+          <td class="total">Total Ingresos:</td>
+          <td id="totalIngresos" class="total">$0.00</td>
+        </tr>
+        <tr>
+          <td class="total">(-) Total Costos Directos:</td>
+          <td id="totalCostosDirectos" class="total">$0.00</td>
+        </tr>
+        <tr>
+          <td class="total">(=) Margen de Contribución:</td>
+          <td id="margenContribucion" class="total">$0.00</td>
+        </tr>
+        <tr>
+          <td class="total">(-) Total CIF:</td>
+          <td id="totalCIF" class="total">$0.00</td>
+        </tr>
+        <tr>
+          <td class="total">(=) Utilidad Bruta:</td>
+          <td id="utilidadBruta" class="total">$0.00</td>
+        </tr>
+        <tr>
+          <td class="total">(-) Total Gastos Operativos:</td>
+          <td id="totalGastos" class="total">$0.00</td>
+        </tr>
+        <tr>
+          <td class="total">Utilidad / Pérdida del Período:</td>
+          <td id="resultado" class="total">$0.00</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <h3>Análisis de Rentabilidad por Proyecto</h3>
+      <table id="analisisProyectos">
+        <thead>
+          <tr>
+            <th>Proyecto</th>
+            <th>Ingresos</th>
+            <th>Costos Directos</th>
+            <th>Margen</th>
+            <th>% Margen</th>
+          </tr>
+        </thead>
+        <tbody id="proyectosBody">
+          <!-- Se llenará dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Función para agregar filas a las tablas
+    function agregarFila(tbodyId) {
+      const tbody = document.getElementById(tbodyId);
+      const newRow = document.createElement('tr');
+      
+      if (tbodyId === 'ingresosBody') {
+        newRow.innerHTML = `
+          <td><input type="text" class="desc-input" placeholder="Descripción del ingreso"></td>
+          <td><input type="text" class="proyecto-input" placeholder="Nombre del proyecto"></td>
+          <td>
+            <select class="metodo-costeo">
+              <option value="casos_uso">Casos de Uso</option>
+              <option value="ifpug">IFPUG</option>
+            </select>
+          </td>
+          <td><input type="number" class="puntos-funcion" placeholder="Puntos de función"></td>
+          <td><input type="number" class="monto-input" placeholder="Monto"></td>
+        `;
+      } else if (tbodyId === 'costosDirectosBody') {
+        newRow.innerHTML = `
+          <td><input type="text" class="desc-input" placeholder="Descripción del costo"></td>
+          <td><input type="text" class="proyecto-input" placeholder="Nombre del proyecto"></td>
+          <td><input type="number" class="monto-input" placeholder="Monto"></td>
+        `;
+      } else {
+        newRow.innerHTML = `
+          <td><input type="text" class="desc-input" placeholder="Descripción"></td>
+          <td><input type="number" class="monto-input" placeholder="Monto"></td>
+        `;
+      }
+      
+      tbody.appendChild(newRow);
+    }
+
+    // Función para calcular el estado financiero
+    function calcularEstado() {
+      // Calcular totales
+      const totalIngresos = sumarMontos('ingresosBody');
+      const totalCostosDirectos = sumarMontos('costosDirectosBody');
+      const totalCIF = sumarMontos('cifBody');
+      const totalGastos = sumarMontos('gastosBody');
+      
+      // Calcular resultados intermedios
+      const margenContribucion = totalIngresos - totalCostosDirectos;
+      const utilidadBruta = margenContribucion - totalCIF;
+      const resultado = utilidadBruta - totalGastos;
+      
+      // Mostrar resultados
+      document.getElementById('totalIngresos').textContent = `$${totalIngresos.toFixed(2)}`;
+      document.getElementById('totalCostosDirectos').textContent = `$${totalCostosDirectos.toFixed(2)}`;
+      document.getElementById('margenContribucion').textContent = `$${margenContribucion.toFixed(2)}`;
+      document.getElementById('totalCIF').textContent = `$${totalCIF.toFixed(2)}`;
+      document.getElementById('utilidadBruta').textContent = `$${utilidadBruta.toFixed(2)}`;
+      document.getElementById('totalGastos').textContent = `$${totalGastos.toFixed(2)}`;
+      
+      const resultadoElement = document.getElementById('resultado');
+      resultadoElement.textContent = `$${resultado.toFixed(2)}`;
+      resultadoElement.className = resultado >= 0 ? 'total positive' : 'total negative';
+      
+      // Generar análisis por proyecto
+      generarAnalisisProyectos();
+    }
+
+    // Función para sumar montos de una tabla
+    function sumarMontos(tbodyId) {
+      const tbody = document.getElementById(tbodyId);
+      const inputs = tbody.querySelectorAll('.monto-input');
+      let total = 0;
+      
+      inputs.forEach(input => {
+        const valor = parseFloat(input.value) || 0;
+        total += valor;
+      });
+      
+      return total;
+    }
+
+    // Función para generar análisis de proyectos
+    function generarAnalisisProyectos() {
+      const proyectosBody = document.getElementById('proyectosBody');
+      proyectosBody.innerHTML = '';
+      
+      // Obtener proyectos únicos de ingresos
+      const proyectos = {};
+      const ingresosRows = document.querySelectorAll('#ingresosBody tr');
+      
+      ingresosRows.forEach(row => {
+        const proyectoInput = row.querySelector('.proyecto-input');
+        const montoInput = row.querySelector('.monto-input');
+        
+        if (proyectoInput && montoInput && proyectoInput.value.trim() !== '') {
+          const proyecto = proyectoInput.value.trim();
+          const monto = parseFloat(montoInput.value) || 0;
+          
+          if (!proyectos[proyecto]) {
+            proyectos[proyecto] = { ingresos: 0, costos: 0 };
+          }
+          
+          proyectos[proyecto].ingresos += monto;
+        }
+      });
+      
+      // Obtener costos por proyecto
+      const costosRows = document.querySelectorAll('#costosDirectosBody tr');
+      
+      costosRows.forEach(row => {
+        const proyectoInput = row.querySelector('.proyecto-input');
+        const montoInput = row.querySelector('.monto-input');
+        
+        if (proyectoInput && montoInput && proyectoInput.value.trim() !== '') {
+          const proyecto = proyectoInput.value.trim();
+          const monto = parseFloat(montoInput.value) || 0;
+          
+          if (!proyectos[proyecto]) {
+            proyectos[proyecto] = { ingresos: 0, costos: 0 };
+          }
+          
+          proyectos[proyecto].costos += monto;
+        }
+      });
+      
+      // Generar filas de análisis
+      for (const proyecto in proyectos) {
+        const datos = proyectos[proyecto];
+        const margen = datos.ingresos - datos.costos;
+        const porcentajeMargen = datos.ingresos > 0 ? (margen / datos.ingresos) * 100 : 0;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${proyecto}</td>
+          <td>$${datos.ingresos.toFixed(2)}</td>
+          <td>$${datos.costos.toFixed(2)}</td>
+          <td>$${margen.toFixed(2)}</td>
+          <td>${porcentajeMargen.toFixed(2)}%</td>
+        `;
+        
+        proyectosBody.appendChild(row);
+      }
+    }
+
+    // Inicializar con algunas filas
+    window.onload = function() {
+      agregarFila('ingresosBody');
+      agregarFila('costosDirectosBody');
+    };
+  </script>
+</body>
+</html>

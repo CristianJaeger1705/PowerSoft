@@ -11,9 +11,11 @@
   <main class="container">
     <section class="card">
       <h3>Opciones</h3>
-      <button id="calcGlobal">Generar Balance (Método Global)</button>
+      <button id="calcGlobal">Generar Balance</button>
       <button id="calcClasificado">Generar Balance Clasificado</button>
       <button id="calcEr">Generar Estado de Resultados</button>
+      <button id="calcCif">Calcular CIF de Software</button>
+      <button id="calcAnalitico">Estado Analítico Detallado</button>
     </section>
 
     <section class="card">
@@ -60,7 +62,7 @@
         // ingresos, costos y gastos influyen en patrimonio por cierre (aquí no cerramos)
       }
       const out = document.getElementById('output');
-      out.innerHTML = `<h4>Balance - Método Global</h4>
+      out.innerHTML = `<h4>Balance</h4>
         <table><tr><th>Rubro</th><th>Monto</th></tr>
         <tr><td>Activo Total</td><td>${activo.toFixed(2)}</td></tr>
         <tr><td>Pasivo Total</td><td>${pasivo.toFixed(2)}</td></tr>
@@ -109,6 +111,117 @@
         <tr><td>(-) Costos</td><td>${costos.toFixed(2)}</td></tr>
         <tr><td>(-) Gastos</td><td>${gastos.toFixed(2)}</td></tr>
         <tr><th>Utilidad Neta</th><th>${utilidad.toFixed(2)}</th></tr></table>`;
+    });
+
+    // Cálculo de CIF para Software
+    document.getElementById('calcCif').addEventListener('click', async ()=>{
+      const {accounts, journals} = await loadData();
+      const balances = computeBalances(accounts, journals);
+      
+      // Identificar costos indirectos de fabricación de software
+      let cifSoftware = 0;
+      let cifDetalle = [];
+      
+      for (const id in balances) {
+        const acc = balances[id].account;
+        const b = balances[id].balance;
+        
+        // Consideramos como CIF de software: salarios indirectos, licencias, hosting, etc.
+        if ((acc.type === 'gasto' || acc.type === 'costo_software') && 
+            (acc.name.includes('Sueldos') || acc.name.includes('Licencias') || 
+             acc.name.includes('Hosting') || acc.name.includes('Alquiler') || 
+             acc.name.includes('Servicios') || acc.name.includes('Administración') ||
+             acc.name.includes('Publicidad'))) {
+          cifSoftware += b;
+          cifDetalle.push({nombre: acc.name, monto: b});
+        }
+      }
+      
+      const out = document.getElementById('output');
+      let html = `<h4>CIF (Costos Indirectos de Fabricación) - Software</h4>
+                  <table><tr><th>Concepto</th><th>Monto</th></tr>`;
+      
+      cifDetalle.forEach(item => {
+        html += `<tr><td>${item.nombre}</td><td>${item.monto.toFixed(2)}</td></tr>`;
+      });
+      
+      html += `<tr><th>Total CIF Software</th><th>${cifSoftware.toFixed(2)}</th></tr></table>`;
+      
+      // Calcular costo por punto de función (si hay datos)
+      const journalsWithFP = journals.filter(j => j.functionPoints && j.functionPoints > 0);
+      if (journalsWithFP.length > 0) {
+        const totalFunctionPoints = journalsWithFP.reduce((sum, j) => sum + j.functionPoints, 0);
+        const costoPorPunto = cifSoftware / totalFunctionPoints;
+        
+        html += `<h4>Análisis por Puntos de Función</h4>
+                 <p>Total Puntos de Función: ${totalFunctionPoints}</p>
+                 <p>Costo por Punto de Función: $${costoPorPunto.toFixed(2)}</p>`;
+      }
+      
+      out.innerHTML = html;
+    });
+
+    // Estado Analítico Detallado
+    document.getElementById('calcAnalitico').addEventListener('click', async ()=>{
+      const {accounts, journals} = await loadData();
+      const balances = computeBalances(accounts, journals);
+      
+      let html = `<h4>Estado Analítico Detallado</h4>
+                  <table><tr><th>Cuenta</th><th>Monto</th><th>Tipo</th></tr>`;
+      
+      // Agrupar por tipo de cuenta
+      const tipos = {
+        activo: [],
+        pasivo: [],
+        patrimonio: [],
+        ingreso: [],
+        costo: [],
+        gasto: [],
+        costo_software: []
+      };
+      
+      for (const id in balances) {
+        const acc = balances[id].account;
+        const b = balances[id].balance;
+        const monto = (acc.type === 'ingreso') ? -b : b; // Ajustar para ingresos
+        
+        if (tipos[acc.type]) {
+          tipos[acc.type].push({nombre: acc.name, monto});
+        }
+      }
+      
+      // Mostrar cada tipo
+      for (const tipo in tipos) {
+        if (tipos[tipo].length > 0) {
+          html += `<tr><td colspan="3" style="background-color:#f0f0f0; font-weight:bold">${tipo.toUpperCase()}</td></tr>`;
+          
+          let subtotal = 0;
+          tipos[tipo].forEach(item => {
+            html += `<tr><td>${item.nombre}</td><td>${item.monto.toFixed(2)}</td><td>${tipo}</td></tr>`;
+            subtotal += item.monto;
+          });
+          
+          html += `<tr><td><strong>Subtotal ${tipo}</strong></td><td><strong>${subtotal.toFixed(2)}</strong></td><td></td></tr>`;
+        }
+      }
+      
+      // Calcular utilidad
+      const ingresosTotal = tipos.ingreso.reduce((sum, item) => sum + item.monto, 0);
+      const costosTotal = tipos.costo.reduce((sum, item) => sum + item.monto, 0);
+      const gastosTotal = tipos.gasto.reduce((sum, item) => sum + item.monto, 0);
+      const costoSoftwareTotal = tipos.costo_software.reduce((sum, item) => sum + item.monto, 0);
+      
+      const utilidad = ingresosTotal - costosTotal - gastosTotal - costoSoftwareTotal;
+      
+      html += `<tr><td colspan="3" style="background-color:#e0e0e0; font-weight:bold">RESUMEN</td></tr>
+               <tr><td>Total Ingresos</td><td>${ingresosTotal.toFixed(2)}</td><td></td></tr>
+               <tr><td>(-) Costos Directos</td><td>${costosTotal.toFixed(2)}</td><td></td></tr>
+               <tr><td>(-) Costos Software</td><td>${costoSoftwareTotal.toFixed(2)}</td><td></td></tr>
+               <tr><td>(-) Gastos Operativos</td><td>${gastosTotal.toFixed(2)}</td><td></td></tr>
+               <tr><td><strong>UTILIDAD NETA</strong></td><td><strong>${utilidad.toFixed(2)}</strong></td><td></td></tr>
+               </table>`;
+      
+      document.getElementById('output').innerHTML = html;
     });
 
   </script>
