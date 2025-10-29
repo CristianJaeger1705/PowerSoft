@@ -1,100 +1,156 @@
 {
   "accounts": [
     {
-      "id": 1,
-      "code": "1001",
+      "id": "2c86",
+      "code": "1101.01",
       "name": "Caja",
       "type": "activo",
-      "subtype": "corriente"
+      "subtype": "Corriente"
     },
     {
-      "id": 2,
-      "code": "1002",
+      "id": "9886",
+      "code": "1101.02",
       "name": "Bancos",
       "type": "activo",
-      "subtype": "corriente"
+      "subtype": "Corriente"
     },
     {
-      "id": 3,
-      "code": "2001",
+      "id": "5ab0",
+      "code": "1102.01",
+      "name": "Cuentas por cobrar (clientes)",
+      "type": "activo",
+      "subtype": "Corriente"
+    },
+    {
+      "id": "a055",
+      "code": "1107.01",
+      "name": "IVA Crédito Fiscal",
+      "type": "activo",
+      "subtype": "Corriente"
+    },
+    {
+      "id": "3bac",
+      "code": "1201.01",
+      "name": "Equipos de cómputo",
+      "type": "activo",
+      "subtype": "No corriente"
+    },
+    {
+      "id": "261f",
+      "code": "1201.02",
+      "name": "Depreciación acumulada de equipo",
+      "type": "activo",
+      "subtype": "No corriente"
+    },
+    {
+      "id": "c380",
+      "code": "1202.01",
+      "name": "Licencias de software",
+      "type": "activo",
+      "subtype": "No corriente"
+    },
+    {
+      "id": "83d4",
+      "code": "1202.02",
+      "name": "Amortización de licencias de software",
+      "type": "activo",
+      "subtype": "No corriente"
+    },
+    {
+      "id": "73fd",
+      "code": "2102.01",
       "name": "Proveedores",
       "type": "pasivo",
-      "subtype": "corriente"
+      "subtype": "Corriente"
     },
     {
-      "id": 4,
-      "code": "3001",
+      "id": "5d34",
+      "code": "2104.01",
+      "name": "Sueldos por pagar",
+      "type": "pasivo",
+      "subtype": "Corriente"
+    },
+    {
+      "id": "2165",
+      "code": "2105.01",
+      "name": "IVA Débito Fiscal",
+      "type": "pasivo",
+      "subtype": "Corriente"
+    },
+    {
+      "id": "5f20",
+      "code": "2105.02",
+      "name": "Otros impuestos por pagar",
+      "type": "pasivo",
+      "subtype": "Corriente"
+    },
+    {
+      "id": "7f3d",
+      "code": "3101.01",
       "name": "Capital Social",
       "type": "patrimonio",
-      "subtype": ""
+      "subtype": "Capital"
     },
     {
-      "id": 5,
-      "code": "4001",
-      "name": "Ventas de Software",
-      "type": "ingreso",
-      "subtype": ""
+      "id": "ac3a",
+      "code": "3202.01",
+      "name": "Utilidad del ejercicio",
+      "type": "patrimonio",
+      "subtype": "Resultados"
     },
     {
-      "id": 6,
-      "code": "5001",
-      "name": "Costo de Ventas",
+      "id": "0342",
+      "code": "4101.01",
+      "name": "Costos de servicios",
       "type": "costo",
-      "subtype": ""
+      "subtype": "Costo directo"
     },
     {
-      "id": 7,
-      "code": "6001",
-      "name": "Gastos Administrativos",
+      "id": "b78d",
+      "code": "4101.02",
+      "name": "Costo de licencias",
+      "type": "costo",
+      "subtype": "Costo directo"
+    },
+    {
+      "id": "c96e",
+      "code": "4102.01",
+      "name": "Sueldos y salarios",
       "type": "gasto",
-      "subtype": ""
+      "subtype": "Gastos administrativos"
     },
     {
-      "id": 8,
-      "code": "6002",
-      "name": "Gastos de Ventas",
+      "id": "9877",
+      "code": "4102.02",
+      "name": "Alquileres",
       "type": "gasto",
-      "subtype": ""
+      "subtype": "Gastos administrativos"
     },
     {
-      "id": 9,
-      "code": "5002",
-      "name": "Costos de Desarrollo Software",
-      "type": "costo_software",
-      "subtype": ""
+      "id": "d914",
+      "code": "4102.03",
+      "name": "Internet y comunicaciones",
+      "type": "gasto",
+      "subtype": "Gastos administrativos"
     },
     {
-      "id": 10,
-      "code": "5003",
-      "name": "Licencias de Software",
-      "type": "costo_software",
-      "subtype": ""
+      "id": "4a97",
+      "code": "4102.04",
+      "name": "Publicidad y marketing",
+      "type": "gasto",
+      "subtype": "Gastos administrativos"
     },
     {
-      "id": 11,
-      "code": "5004",
-      "name": "Sueldos Desarrolladores",
-      "type": "costo_software",
-      "subtype": ""
+      "id": "67de",
+      "code": "4102.05",
+      "name": "Servicios cloud",
+      "type": "gasto",
+      "subtype": "Gastos administrativos"
     },
     {
-      "id": 12,
-      "code": "5005",
-      "name": "Hosting y Servidores",
-      "type": "costo_software",
-      "subtype": ""
-    },
-    {
-      "id": 13,
-      "code": "4002",
-      "name": "Ingresos por Mantenimiento",
-      "type": "ingreso",
-      "subtype": ""
-    },
-    {
-      "id": 14,
-      "code": "4003",
-      "name": "Ingresos por Consultoría",
+      "id": "1067",
+      "code": "5101.01",
+      "name": "Ingreso por ventas",
       "type": "ingreso",
       "subtype": ""
     }
@@ -102,7 +158,7 @@
   "journals": [],
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "username": "admin",
       "password": "admin123"
     }

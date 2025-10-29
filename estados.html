@@ -16,6 +16,8 @@
       <button id="calcEr">Generar Estado de Resultados</button>
       <button id="calcCif">Calcular CIF de Software</button>
       <button id="calcAnalitico">Estado Analítico Detallado</button>
+      <button id="calcMayor">Generar Libro Mayor</button>
+      <button id="calcCierre">Cierre Contable</button>
     </section>
 
     <section class="card">
@@ -223,6 +225,224 @@
       
       document.getElementById('output').innerHTML = html;
     });
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+      // Función para generar Libro Mayor con filtros de período
+document.getElementById('calcMayor').addEventListener('click', async ()=>{
+  const {accounts, journals} = await loadData();
+  
+  // Crear interfaz de filtros
+  let html = `<h4>Libro Mayor - Con Filtros de Período</h4>
+              <div class="filtros-periodo">
+                <label>Fecha Inicio: <input type="date" id="fechaInicio"></label>
+                <label>Fecha Fin: <input type="date" id="fechaFin"></label>
+                <label>Mostrar cuentas con saldo cero: 
+                  <input type="checkbox" id="mostrarCero" checked>
+                </label>
+                <button onclick="generarLibroMayorFiltrado()">Generar Reporte</button>
+              </div>
+              <div id="resultadoMayor"></div>`;
+  
+  document.getElementById('output').innerHTML = html;
+});
+
+// Función para generar el libro mayor filtrado
+async function generarLibroMayorFiltrado() {
+  const {accounts, journals} = await loadData();
+  const fechaInicio = document.getElementById('fechaInicio').value;
+  const fechaFin = document.getElementById('fechaFin').value;
+  const mostrarCero = document.getElementById('mostrarCero').checked;
+  
+  let html = `<h4>Libro Mayor ${fechaInicio ? `del ${fechaInicio} al ${fechaFin}` : 'Completo'}</h4>`;
+  
+  // Filtrar journals por fecha si se especificó
+  let journalsFiltrados = journals;
+  if (fechaInicio && fechaFin) {
+    journalsFiltrados = journals.filter(j => j.date >= fechaInicio && j.date <= fechaFin);
+  }
+  
+  // Ordenar journals por fecha
+  journalsFiltrados.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  let totalDebe = 0;
+  let totalHaber = 0;
+  
+  // Para cada cuenta, generar su libro mayor
+  for (const account of accounts) {
+    const movimientos = [];
+    let saldoInicial = 0;
+    let saldoFinal = 0;
+    
+    // Calcular saldo inicial (transacciones antes del período)
+    if (fechaInicio) {
+      const journalsInicial = journals.filter(j => j.date < fechaInicio);
+      for (const journal of journalsInicial) {
+        for (const entry of journal.entries) {
+          if (entry.accountId === account.id) {
+            saldoInicial += (entry.debit || 0) - (entry.credit || 0);
+          }
+        }
+      }
+    }
+    
+    saldoFinal = saldoInicial;
+    
+    // Buscar transacciones del período
+    for (const journal of journalsFiltrados) {
+      for (const entry of journal.entries) {
+        if (entry.accountId === account.id) {
+          const movimiento = {
+            fecha: journal.date,
+            descripcion: journal.desc,
+            debe: entry.debit || 0,
+            haber: entry.credit || 0
+          };
+          
+          saldoFinal += movimiento.debe - movimiento.haber;
+          movimiento.saldo = saldoFinal;
+          
+          movimientos.push(movimiento);
+          
+          totalDebe += movimiento.debe;
+          totalHaber += movimiento.haber;
+        }
+      }
+    }
+    
+    // Mostrar cuenta solo si tiene movimientos o si se solicita mostrar cero
+    if (movimientos.length > 0 || (mostrarCero && saldoFinal !== 0)) {
+      html += `<div class="cuenta-mayor" style="margin-bottom: 30px; border: 1px solid #ccc; padding: 15px;">
+                <h5>${account.code} - ${account.name} (${account.type})</h5>
+                <p><strong>Saldo Inicial: ${saldoInicial.toFixed(2)}</strong></p>
+                <table style="width: 100%; border-collapse: collapse;">
+                  <tr style="background-color: #003366; color: white;">
+                    <th style="padding: 8px; border: 1px solid #ccc;">Fecha</th>
+                    <th style="padding: 8px; border: 1px solid #ccc;">Descripción</th>
+                    <th style="padding: 8px; border: 1px solid #ccc;">Debe</th>
+                    <th style="padding: 8px; border: 1px solid #ccc;">Haber</th>
+                    <th style="padding: 8px; border: 1px solid #ccc;">Saldo</th>
+                  </tr>`;
+      
+      // Mostrar saldo inicial como primera línea
+      if (fechaInicio && saldoInicial !== 0) {
+        html += `<tr>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${fechaInicio}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">Saldo Inicial</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;"></td>
+                  <td style="padding: 8px; border: 1px solid #ccc;"></td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${saldoInicial.toFixed(2)}</td>
+                </tr>`;
+      }
+      
+      // Mostrar movimientos
+      for (const mov of movimientos) {
+        html += `<tr>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${mov.fecha}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${mov.descripcion}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${mov.debe > 0 ? mov.debe.toFixed(2) : ''}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${mov.haber > 0 ? mov.haber.toFixed(2) : ''}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${mov.saldo.toFixed(2)}</td>
+                </tr>`;
+      }
+      
+      html += `</table>
+               <p><strong>Saldo Final: ${saldoFinal.toFixed(2)}</strong></p>
+              </div>`;
+    }
+  }
+  
+  // Totales generales
+  html += `<div style="background-color: #e9f0ff; padding: 15px; margin-top: 20px;">
+            <h5>Totales del Período</h5>
+            <p>Total Débito: ${totalDebe.toFixed(2)}</p>
+            <p>Total Crédito: ${totalHaber.toFixed(2)}</p>
+            <p>Diferencia: ${(totalDebe - totalHaber).toFixed(2)}</p>
+           </div>`;
+  
+  document.getElementById('resultadoMayor').innerHTML = html;
+}
+
+// Función para Cierre Contable
+document.getElementById('calcCierre').addEventListener('click', async ()=>{
+  const {accounts, journals} = await loadData();
+  
+  let html = `<h4>Cierre Contable</h4>
+              <div class="cierre-form">
+                <label>Período a cerrar (Mes/Año): 
+                  <input type="month" id="periodoCierre" required>
+                </label>
+                <button onclick="realizarCierre()">Realizar Cierre</button>
+                <div id="resultadoCierre"></div>
+              </div>`;
+  
+  document.getElementById('output').innerHTML = html;
+});
+
+// Función para realizar el cierre contable
+async function realizarCierre() {
+  const periodo = document.getElementById('periodoCierre').value;
+  if (!periodo) {
+    alert('Seleccione un período');
+    return;
+  }
+  
+  const {accounts, journals} = await loadData();
+  const balances = computeBalances(accounts, journals);
+  
+  // Calcular resultado del ejercicio (Ingresos - Gastos - Costos)
+  let totalIngresos = 0;
+  let totalGastos = 0;
+  let totalCostos = 0;
+  let totalCostosSoftware = 0;
+  
+  for (const id in balances) {
+    const acc = balances[id].account;
+    const b = balances[id].balance;
+    
+    if (acc.type === 'ingreso') totalIngresos += -b;
+    if (acc.type === 'gasto') totalGastos += b;
+    if (acc.type === 'costo') totalCostos += b;
+    if (acc.type === 'costo_software') totalCostosSoftware += b;
+  }
+  
+  const resultadoEjercicio = totalIngresos - totalGastos - totalCostos - totalCostosSoftware;
+  
+  let html = `<h4>Resultado del Cierre - ${periodo}</h4>
+              <table>
+                <tr><td>Total Ingresos:</td><td>${totalIngresos.toFixed(2)}</td></tr>
+                <tr><td>(-) Total Gastos:</td><td>${totalGastos.toFixed(2)}</td></tr>
+                <tr><td>(-) Total Costos:</td><td>${totalCostos.toFixed(2)}</td></tr>
+                <tr><td>(-) Total Costos Software:</td><td>${totalCostosSoftware.toFixed(2)}</td></tr>
+                <tr><th>Resultado del Ejercicio:</th><th>${resultadoEjercicio.toFixed(2)}</th></tr>
+              </table>`;
+  
+  if (resultadoEjercicio !== 0) {
+    html += `<div style="margin-top: 20px;">
+              <p><strong>Asiento de Cierre Sugerido:</strong></p>
+              <p>Para cerrar las cuentas de resultado a Patrimonio:</p>
+              <ul>
+                <li>Debe: Cuentas de Ingresos por $${totalIngresos.toFixed(2)}</li>
+                <li>Haber: Cuentas de Gastos y Costos por ${(totalGastos + totalCostos + totalCostosSoftware).toFixed(2)}</li>
+                <li>Haber/Debe: Resultado del Ejercicio por $${Math.abs(resultadoEjercicio).toFixed(2)}</li>
+              </ul>
+              <button onclick="generarAsientoCierre(${totalIngresos}, ${totalGastos}, ${totalCostos}, ${totalCostosSoftware}, ${resultadoEjercicio}, '${periodo}')">
+                Generar Asiento de Cierre Automático
+              </button>
+             </div>`;
+  }
+  
+  document.getElementById('resultadoCierre').innerHTML = html;
+}
+
+// Función para generar asiento de cierre automático
+async function generarAsientoCierre(ingresos, gastos, costos, costosSoftware, resultado, periodo) {
+  const fecha = new Date().toISOString().split('T')[0];
+  const descripcion = `Cierre contable - ${periodo}`;
+  
+  // Aquí podrías guardar el asiento de cierre automáticamente
+  // Por ahora solo mostramos el asiento sugerido
+  alert(`Asiento de cierre generado para ${periodo}\n\nPuede registrarlo manualmente en transacciones:\n\nDescripción: ${descripcion}\nFecha: ${fecha}\n\nNota: Esta funcionalidad de guardado automático requiere integración con la API.`);
+}
 
   </script>
 </body>

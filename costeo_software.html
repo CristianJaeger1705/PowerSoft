@@ -11,6 +11,9 @@
     .factor-table th, .factor-table td { padding: 8px; text-align: center; }
     .total-section { background: #f0f8ff; padding: 15px; border-radius: 5px; }
     .btn-generar { background: #28a745; }
+    .panel-costos { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; border-left: 4px solid #003366; }
+    .panel-costos table { width: 100%; }
+    .panel-costos td { padding: 4px 8px; }
   </style>
 </head>
 <body>
@@ -23,6 +26,9 @@
     <section class="card">
       <h3>Calculadora de Puntos de Función</h3>
       
+      <!-- Panel de Costos de Equipo - Se insertará automáticamente -->
+      <div id="panelCostosEquipo"></div>
+
       <div class="costeo-section">
         <h4>Entradas Externas (EI)</h4>
         <table class="factor-table">
@@ -75,12 +81,16 @@
 
       <div class="costeo-section">
         <label>Proyecto: <input type="text" id="proyecto_nombre" placeholder="Nombre del proyecto"></label>
-        <label>Costo por Punto de Función: $<input type="number" id="costo_por_punto" value="100" step="0.01"></label>
+        <label>Horas por Punto: 
+          <input type="number" id="horas_por_punto" value="1.8" step="0.1" min="1.0" max="3.0" style="width: 80px;">
+        </label>
+        <small>Simple: 1.5 | Medio: 1.8 | Complejo: 2.2</small>
       </div>
 
       <div class="total-section">
         <h4>Resumen del Costeo</h4>
         <p>Total Puntos de Función: <span id="total_puntos">0</span></p>
+        <p>Costo por Punto: $<span id="costo_por_punto_display">0.00</span></p>
         <p>Costo Base: $<span id="costo_base">0.00</span></p>
         <p>Margen de Ganancia (40%): $<span id="margen_ganancia">0.00</span></p>
         <p><strong>Precio de Venta: $<span id="precio_venta">0.00</span></strong></p>
@@ -91,78 +101,145 @@
   </main>
 
   <script>
-    // Calcular totales en tiempo real
-    function calcularTotales() {
-      // Entradas Externas
-      const eiBaja = document.getElementById('ei_baja').value * 3;
-      const eiMedia = document.getElementById('ei_media').value * 4;
-      const eiAlta = document.getElementById('ei_alta').value * 6;
-      
-      // Salidas Externas
-      const eoBaja = document.getElementById('eo_baja').value * 4;
-      const eoMedia = document.getElementById('eo_media').value * 5;
-      const eoAlta = document.getElementById('eo_alta').value * 7;
-      
-      // Consultas Externas
-      const eqBaja = document.getElementById('eq_baja').value * 3;
-      const eqMedia = document.getElementById('eq_media').value * 4;
-      const eqAlta = document.getElementById('eq_alta').value * 6;
-      
-      // Archivos Lógicos Internos
-      const ilfBaja = document.getElementById('ilf_baja').value * 7;
-      const ilfMedia = document.getElementById('ilf_media').value * 10;
-      const ilfAlta = document.getElementById('ilf_alta').value * 15;
-      
-      // Archivos de Interfaz Externa
-      const eifBaja = document.getElementById('eif_baja').value * 5;
-      const eifMedia = document.getElementById('eif_media').value * 7;
-      const eifAlta = document.getElementById('eif_alta').value * 10;
-      
-      // Actualizar subtotales
-      document.getElementById('ei_baja_total').textContent = eiBaja;
-      document.getElementById('ei_media_total').textContent = eiMedia;
-      document.getElementById('ei_alta_total').textContent = eiAlta;
-      
-      document.getElementById('eo_baja_total').textContent = eoBaja;
-      document.getElementById('eo_media_total').textContent = eoMedia;
-      document.getElementById('eo_alta_total').textContent = eoAlta;
-      
-      document.getElementById('eq_baja_total').textContent = eqBaja;
-      document.getElementById('eq_media_total').textContent = eqMedia;
-      document.getElementById('eq_alta_total').textContent = eqAlta;
-      
-      document.getElementById('ilf_baja_total').textContent = ilfBaja;
-      document.getElementById('ilf_media_total').textContent = ilfMedia;
-      document.getElementById('ilf_alta_total').textContent = ilfAlta;
-      
-      document.getElementById('eif_baja_total').textContent = eifBaja;
-      document.getElementById('eif_media_total').textContent = eifMedia;
-      document.getElementById('eif_alta_total').textContent = eifAlta;
-      
-      // Calcular total puntos
-      const totalPuntos = eiBaja + eiMedia + eiAlta + 
-                         eoBaja + eoMedia + eoAlta + 
-                         eqBaja + eqMedia + eqAlta + 
-                         ilfBaja + ilfMedia + ilfAlta + 
-                         eifBaja + eifMedia + eifAlta;
-      
-      document.getElementById('total_puntos').textContent = totalPuntos;
-      
-      // Calcular costos y precios
-      const costoPorPunto = parseFloat(document.getElementById('costo_por_punto').value) || 0;
-      const costoBase = totalPuntos * costoPorPunto;
-      const margenGanancia = costoBase * 0.4;
-      const precioVenta = costoBase + margenGanancia;
-      
-      document.getElementById('costo_base').textContent = costoBase.toFixed(2);
-      document.getElementById('margen_ganancia').textContent = margenGanancia.toFixed(2);
-      document.getElementById('precio_venta').textContent = precioVenta.toFixed(2);
+    // FUNCIÓN PARA CALCULAR COSTOS DE EQUIPO
+    function calcularCostosEquipo() {
+        const salariosBase = 11300; // $11,300
+        const aguinaldo = salariosBase * 0.0833; // 8.33%
+        const vacaciones = salariosBase * 0.0417; // 4.17%
+        const indemnizaciones = salariosBase * 0.05; // 5%
+        const cargasSociales = salariosBase * 0.15; // 15%
+        
+        const costoMensualTotal = salariosBase + aguinaldo + vacaciones + indemnizaciones + cargasSociales;
+        const horasProductivasMensuales = 720; // 6 personas × 20 días × 6 horas
+        const costoHora = costoMensualTotal / horasProductivasMensuales;
+        
+        return {
+            salariosBase: salariosBase,
+            aguinaldo: aguinaldo,
+            vacaciones: vacaciones,
+            indemnizaciones: indemnizaciones,
+            cargasSociales: cargasSociales,
+            costoMensualTotal: costoMensualTotal,
+            horasProductivas: horasProductivasMensuales,
+            costoHora: costoHora
+        };
     }
 
-    // Agregar event listeners a todos los inputs
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-      input.addEventListener('input', calcularTotales);
-    });
+    // FUNCIÓN PARA CALCULAR COSTO POR PUNTO
+    function calcularCostoPorPunto() {
+        const costosEquipo = calcularCostosEquipo();
+        const horasPorPunto = parseFloat(document.getElementById('horas_por_punto').value) || 1.8;
+        
+        return costosEquipo.costoHora * horasPorPunto;
+    }
+
+    // ACTUALIZAR LA VISUALIZACIÓN DE COSTOS
+    function actualizarPanelCostos(costosEquipo, costoPorPunto) {
+        const panelHTML = `
+            <div class="panel-costos">
+                <h4>💼 Costos de Equipo - PowerSoft</h4>
+                <table>
+                    <tr><td>Salarios base (6 personas):</td><td>$${costosEquipo.salariosBase.toFixed(2)}</td></tr>
+                    <tr><td>Aguinaldo (8.33%):</td><td>$${costosEquipo.aguinaldo.toFixed(2)}</td></tr>
+                    <tr><td>Vacaciones (4.17%):</td><td>$${costosEquipo.vacaciones.toFixed(2)}</td></tr>
+                    <tr><td>Indemnizaciones (5%):</td><td>$${costosEquipo.indemnizaciones.toFixed(2)}</td></tr>
+                    <tr><td>Cargas sociales (15%):</td><td>$${costosEquipo.cargasSociales.toFixed(2)}</td></tr>
+                    <tr style="border-top: 1px solid #ccc;"><td><strong>Total costo mensual:</strong></td><td><strong>$${costosEquipo.costoMensualTotal.toFixed(2)}</strong></td></tr>
+                    <tr><td>Horas productivas/mes:</td><td>${costosEquipo.horasProductivas} horas</td></tr>
+                    <tr><td>Costo por hora:</td><td>$${costosEquipo.costoHora.toFixed(2)}</td></tr>
+                    <tr><td>Horas por punto:</td><td><input type="number" id="horas_por_punto" value="1.8" step="0.1" style="width: 80px;" onchange="calcularTotales()"></td></tr>
+                    <tr style="background: #e3f2fd;"><td><strong>Costo por punto:</strong></td><td><strong>$${costoPorPunto.toFixed(2)}</strong></td></tr>
+                </table>
+            </div>
+        `;
+        
+        // Insertar o actualizar el panel
+        let panelExistente = document.getElementById('panelCostosEquipo');
+        if (panelExistente) {
+            panelExistente.innerHTML = panelHTML;
+        }
+    }
+
+    // CALCULAR PUNTOS IFPUG
+    function calcularPuntosIFPUG() {
+        // Entradas Externas
+        const eiBaja = document.getElementById('ei_baja').value * 3;
+        const eiMedia = document.getElementById('ei_media').value * 4;
+        const eiAlta = document.getElementById('ei_alta').value * 6;
+        
+        // Salidas Externas
+        const eoBaja = document.getElementById('eo_baja').value * 4;
+        const eoMedia = document.getElementById('eo_media').value * 5;
+        const eoAlta = document.getElementById('eo_alta').value * 7;
+        
+        // Consultas Externas
+        const eqBaja = document.getElementById('eq_baja').value * 3;
+        const eqMedia = document.getElementById('eq_media').value * 4;
+        const eqAlta = document.getElementById('eq_alta').value * 6;
+        
+        // Archivos Lógicos Internos
+        const ilfBaja = document.getElementById('ilf_baja').value * 7;
+        const ilfMedia = document.getElementById('ilf_media').value * 10;
+        const ilfAlta = document.getElementById('ilf_alta').value * 15;
+        
+        // Archivos de Interfaz Externa
+        const eifBaja = document.getElementById('eif_baja').value * 5;
+        const eifMedia = document.getElementById('eif_media').value * 7;
+        const eifAlta = document.getElementById('eif_alta').value * 10;
+        
+        // Actualizar subtotales
+        document.getElementById('ei_baja_total').textContent = eiBaja;
+        document.getElementById('ei_media_total').textContent = eiMedia;
+        document.getElementById('ei_alta_total').textContent = eiAlta;
+        
+        document.getElementById('eo_baja_total').textContent = eoBaja;
+        document.getElementById('eo_media_total').textContent = eoMedia;
+        document.getElementById('eo_alta_total').textContent = eoAlta;
+        
+        document.getElementById('eq_baja_total').textContent = eqBaja;
+        document.getElementById('eq_media_total').textContent = eqMedia;
+        document.getElementById('eq_alta_total').textContent = eqAlta;
+        
+        document.getElementById('ilf_baja_total').textContent = ilfBaja;
+        document.getElementById('ilf_media_total').textContent = ilfMedia;
+        document.getElementById('ilf_alta_total').textContent = ilfAlta;
+        
+        document.getElementById('eif_baja_total').textContent = eifBaja;
+        document.getElementById('eif_media_total').textContent = eifMedia;
+        document.getElementById('eif_alta_total').textContent = eifAlta;
+        
+        // Calcular total puntos
+        return eiBaja + eiMedia + eiAlta + 
+               eoBaja + eoMedia + eoAlta + 
+               eqBaja + eqMedia + eqAlta + 
+               ilfBaja + ilfMedia + ilfAlta + 
+               eifBaja + eifMedia + eifAlta;
+    }
+
+    // FUNCIÓN PRINCIPAL MODIFICADA
+    function calcularTotales() {
+        // 1. Calcular costos de equipo
+        const costosEquipo = calcularCostosEquipo();
+        const costoPorPunto = calcularCostoPorPunto();
+        
+        // 2. Actualizar la sección de visualización de costos
+        actualizarPanelCostos(costosEquipo, costoPorPunto);
+        
+        // 3. Calcular puntos IFPUG
+        const totalPuntos = calcularPuntosIFPUG();
+        document.getElementById('total_puntos').textContent = totalPuntos;
+        
+        // 4. Calcular precios con el nuevo costo por punto
+        const costoBase = totalPuntos * costoPorPunto;
+        const margenGanancia = costoBase * 0.4;
+        const precioVenta = costoBase + margenGanancia;
+        
+        // Actualizar la UI
+        document.getElementById('costo_por_punto_display').textContent = costoPorPunto.toFixed(2);
+        document.getElementById('costo_base').textContent = costoBase.toFixed(2);
+        document.getElementById('margen_ganancia').textContent = margenGanancia.toFixed(2);
+        document.getElementById('precio_venta').textContent = precioVenta.toFixed(2);
+    }
 
     // Generar transacción contable
     document.getElementById('generarTransaccion').addEventListener('click', function() {
@@ -194,8 +271,15 @@
       }
     });
 
-    // Calcular inicialmente
-    calcularTotales();
+    // Agregar event listeners a todos los inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', calcularTotales);
+        });
+        
+        // Calcular inicialmente
+        calcularTotales();
+    });
   </script>
 </body>
 </html>
