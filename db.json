@@ -153,9 +153,202 @@
       "name": "Ingreso por ventas",
       "type": "ingreso",
       "subtype": ""
+    },
+    {
+      "id": "9c60",
+      "code": "1109.01",
+      "name": "Anticipo a proveedores tecnológicos",
+      "type": "activo",
+      "subtype": "Anticipos"
     }
   ],
-  "journals": [],
+  "journals": [
+    {
+      "id": "bb27",
+      "date": "2025-01-15",
+      "desc": "Facturación#001 - Hotel Paradise  50% anticipo",
+      "entries": [
+        {
+          "accountId": 5,
+          "debit": 13701.19,
+          "credit": 0
+        },
+        {
+          "accountId": 1067,
+          "debit": 0,
+          "credit": 11611.18
+        },
+        {
+          "accountId": 2165,
+          "debit": 0,
+          "credit": 2090.01
+        }
+      ],
+      "project": "Sistema Hotelero integral",
+      "costMethod": "ifpug",
+      "functionPoints": 523
+    },
+    {
+      "id": "3809",
+      "date": "2025-01-15",
+      "desc": "Pago de Nómina de desarrolladores",
+      "entries": [
+        {
+          "accountId": null,
+          "debit": 12995,
+          "credit": 0
+        },
+        {
+          "accountId": 9886,
+          "debit": 0,
+          "credit": 12995
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "5e91",
+      "date": "2025-01-20",
+      "desc": "Licencias Visual Studio, JetBrains",
+      "entries": [
+        {
+          "accountId": null,
+          "debit": 1200,
+          "credit": 0
+        },
+        {
+          "accountId": null,
+          "debit": 156,
+          "credit": 0
+        },
+        {
+          "accountId": 9886,
+          "debit": 0,
+          "credit": 1356
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "3380",
+      "date": "2025-01-25",
+      "desc": "Pago AWS, Azure-Entorno de desarrollo",
+      "entries": [
+        {
+          "accountId": 67,
+          "debit": 450,
+          "credit": 0
+        },
+        {
+          "accountId": null,
+          "debit": 58.5,
+          "credit": 0
+        },
+        {
+          "accountId": 9886,
+          "debit": 0,
+          "credit": 508.5
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "8ed4",
+      "date": "2025-01-31",
+      "desc": "Gastos operativos de Enero",
+      "entries": [
+        {
+          "accountId": 9877,
+          "debit": 800,
+          "credit": 0
+        },
+        {
+          "accountId": null,
+          "debit": 120,
+          "credit": 0
+        },
+        {
+          "accountId": 4,
+          "debit": 300,
+          "credit": 0
+        },
+        {
+          "accountId": 9886,
+          "debit": 0,
+          "credit": 1220
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "f388",
+      "date": "2025-01-24",
+      "desc": "pago publicidad",
+      "entries": [
+        {
+          "accountId": 4,
+          "debit": 1200,
+          "credit": 0
+        },
+        {
+          "accountId": 2,
+          "debit": 0,
+          "credit": 1200
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "63cc",
+      "date": "2025-10-29",
+      "desc": "alquilerrrrr",
+      "entries": [
+        {
+          "accountId": 9877,
+          "debit": 350,
+          "credit": 0
+        },
+        {
+          "accountId": 2,
+          "debit": 0,
+          "credit": 350
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "c523",
+      "date": "2025-10-29",
+      "desc": "internet",
+      "entries": [
+        {
+          "accountId": null,
+          "debit": 1290,
+          "credit": 0
+        },
+        {
+          "accountId": 2,
+          "debit": 0,
+          "credit": 1290
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    }
+  ],
   "users": [
     {
       "id": "1",
