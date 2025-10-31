@@ -156,13 +156,12 @@
       const functionPoints = document.getElementById('jFunctionPoints').value;
       
       const rows = Array.from(document.querySelectorAll('.entryRow'));
-      const entries = rows.map(r=>{
-        return {
-          accountId: parseInt(r.querySelector('.accSelect').value),
-          debit: parseFloat(r.querySelector('.debit').value) || 0,
-          credit: parseFloat(r.querySelector('.credit').value) || 0
-        };
-      }).filter(en=>en.debit>0 || en.credit>0);
+      const entries = rows.map(r => ({
+      accountId: r.querySelector('.accSelect').value, // dejar como string
+      debit: parseFloat(r.querySelector('.debit').value) || 0,
+      credit: parseFloat(r.querySelector('.credit').value) || 0
+      })).filter(en => en.debit > 0 || en.credit > 0);
+
 
       const totalDebit = entries.reduce((s,e)=>s+e.debit,0);
       const totalCredit = entries.reduce((s,e)=>s+e.credit,0);

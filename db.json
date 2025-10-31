@@ -294,7 +294,7 @@
       "desc": "pago publicidad",
       "entries": [
         {
-          "accountId": 4,
+          "accountId": "4a97",
           "debit": 1200,
           "credit": 0
         },
@@ -329,19 +329,39 @@
       "functionPoints": null
     },
     {
-      "id": "c523",
-      "date": "2025-10-29",
-      "desc": "internet",
+      "id": "e92a",
+      "date": "2025-10-30",
+      "desc": "Pago de publicidad",
       "entries": [
         {
-          "accountId": null,
-          "debit": 1290,
-          "credit": 0
+          "accountId": "2c86",
+          "debit": 0,
+          "credit": 1200
         },
         {
-          "accountId": 2,
+          "accountId": "4a97",
+          "debit": 1200,
+          "credit": 0
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
+    },
+    {
+      "id": "faf9",
+      "date": "2025-10-30",
+      "desc": "Pago de sueldos 13000",
+      "entries": [
+        {
+          "accountId": "9886",
           "debit": 0,
-          "credit": 1290
+          "credit": 13000
+        },
+        {
+          "accountId": "c96e",
+          "debit": 13000,
+          "credit": 0
         }
       ],
       "project": null,
