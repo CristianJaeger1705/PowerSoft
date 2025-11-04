@@ -307,66 +307,6 @@
       "project": null,
       "costMethod": null,
       "functionPoints": null
-    },
-    {
-      "id": "63cc",
-      "date": "2025-10-29",
-      "desc": "alquilerrrrr",
-      "entries": [
-        {
-          "accountId": 9877,
-          "debit": 350,
-          "credit": 0
-        },
-        {
-          "accountId": 2,
-          "debit": 0,
-          "credit": 350
-        }
-      ],
-      "project": null,
-      "costMethod": null,
-      "functionPoints": null
-    },
-    {
-      "id": "e92a",
-      "date": "2025-10-30",
-      "desc": "Pago de publicidad",
-      "entries": [
-        {
-          "accountId": "2c86",
-          "debit": 0,
-          "credit": 1200
-        },
-        {
-          "accountId": "4a97",
-          "debit": 1200,
-          "credit": 0
-        }
-      ],
-      "project": null,
-      "costMethod": null,
-      "functionPoints": null
-    },
-    {
-      "id": "faf9",
-      "date": "2025-10-30",
-      "desc": "Pago de sueldos 13000",
-      "entries": [
-        {
-          "accountId": "9886",
-          "debit": 0,
-          "credit": 13000
-        },
-        {
-          "accountId": "c96e",
-          "debit": 13000,
-          "credit": 0
-        }
-      ],
-      "project": null,
-      "costMethod": null,
-      "functionPoints": null
     }
   ],
   "users": [
