@@ -307,6 +307,26 @@
       "project": null,
       "costMethod": null,
       "functionPoints": null
+    },
+    {
+      "id": "7536",
+      "date": "2025-11-06",
+      "desc": "prueba",
+      "entries": [
+        {
+          "accountId": "2c86",
+          "debit": 1200,
+          "credit": 0
+        },
+        {
+          "accountId": "2165",
+          "debit": 0,
+          "credit": 1200
+        }
+      ],
+      "project": null,
+      "costMethod": null,
+      "functionPoints": null
     }
   ],
   "users": [

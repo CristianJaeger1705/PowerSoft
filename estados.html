@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Powersoft - Estados Financieros</title>
   <link rel="stylesheet" href="estilos.css" />
+  <!-- Incluir jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
     .filtros-periodo {
       background: #f8f9fa;
@@ -25,6 +28,10 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      margin-right: 10px;
+    }
+    .filtros-periodo button.pdf {
+      background: #dc3545;
     }
     .cuenta-mayor {
       margin-bottom: 30px;
@@ -45,7 +52,7 @@
       <button id="calcCif">Calcular CIF de Software</button>
       <button id="calcAnalitico">Estado Analítico Detallado</button>
       <!-- <button id="calcMayor">Generar Libro Mayor</button> -->
-      <button id="calcCierre">Cierre Contable</button>
+      <!-- <button id="calcCierre">Cierre Contable</button> -->
     </section>
 
     <section class="card">
@@ -57,6 +64,10 @@
   <script>
     const API = 'http://localhost:3000';
     if (!sessionStorage.getItem('ps_user')) location.href='login.html';
+
+    // Variable global para almacenar los datos del último reporte
+    let ultimoReporteData = null;
+    let ultimoReporteTipo = '';
 
     async function loadData(){
       try {
@@ -121,6 +132,7 @@
           <label>Fecha Inicio: <input type="date" id="fechaInicio"></label>
           <label>Fecha Fin: <input type="date" id="fechaFin"></label>
           <button onclick="${funcionGenerar}()">Generar Reporte</button>
+          <button class="pdf" onclick="generarPDF()" style="display:none;" id="btnPDF">Generar PDF</button>
         </div>
         <div id="resultadoReporte"></div>
       `;
@@ -141,11 +153,6 @@
     // Estado Analítico Detallado (activo)
     document.getElementById('calcAnalitico').addEventListener('click', async ()=>{
       document.getElementById('output').innerHTML = crearFiltrosPeriodo('Estado Analítico Detallado', 'generarEstadoAnalitico');
-    });
-
-    // Cierre Contable (activo)
-    document.getElementById('calcCierre').addEventListener('click', async ()=>{
-      document.getElementById('output').innerHTML = crearFiltrosPeriodo('Cierre Contable', 'realizarCierre');
     });
 
     // ========== FUNCIONES PARA BOTONES ACTIVOS ==========
@@ -179,6 +186,17 @@
         </table>`;
       
       document.getElementById('resultadoReporte').innerHTML = html;
+      
+      // Guardar datos para PDF
+      ultimoReporteData = {
+        tipo: 'Balance General',
+        periodo: periodo,
+        activo: activo,
+        pasivo: pasivo,
+        patrimonio: patrimonio
+      };
+      ultimoReporteTipo = 'balance';
+      document.getElementById('btnPDF').style.display = 'inline-block';
     }
 
     async function generarCalculoCIF() {
@@ -248,6 +266,16 @@
               </tr></table>`;
 
       document.getElementById('resultadoReporte').innerHTML = html;
+      
+      // Guardar datos para PDF
+      ultimoReporteData = {
+        tipo: 'CIF Software',
+        periodo: periodo,
+        detalle: cifDetalle,
+        total: cifSoftware
+      };
+      ultimoReporteTipo = 'cif';
+      document.getElementById('btnPDF').style.display = 'inline-block';
     }
 
     async function generarEstadoAnalitico() {
@@ -337,60 +365,151 @@
               </table>`;
       
       document.getElementById('resultadoReporte').innerHTML = html;
+      
+      // Guardar datos para PDF
+      ultimoReporteData = {
+        tipo: 'Estado Analítico Detallado',
+        periodo: periodo,
+        tipos: tipos,
+        ingresosTotal: ingresosTotal,
+        costosTotal: costosTotal,
+        gastosTotal: gastosTotal,
+        costoSoftwareTotal: costoSoftwareTotal,
+        utilidad: utilidad
+      };
+      ultimoReporteTipo = 'analitico';
+      document.getElementById('btnPDF').style.display = 'inline-block';
     }
 
-    async function realizarCierre() {
-      const periodo = document.getElementById('resultadoCierre').value;
-      if (!periodo) {
-        alert('Seleccione un período');
+    // ========== FUNCIÓN PARA GENERAR PDF ==========
+    function generarPDF() {
+      if (!ultimoReporteData) {
+        alert('No hay datos para generar PDF. Genere primero un reporte.');
         return;
       }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
       
-      const {accounts, journals} = await loadData();
+      // Configuración inicial del documento
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('POWERSOFT - ESTADO FINANCIERO', 105, 15, { align: 'center' });
       
-      // Calcular saldos solo para el período seleccionado
-      const año = periodo.split('-')[0];
-      const mes = periodo.split('-')[1];
-      const fechaInicio = `${periodo}-01`;
-      const fechaFin = `${periodo}-${new Date(año, mes, 0).getDate()}`;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Tipo: ${ultimoReporteData.tipo}`, 20, 25);
+      doc.text(`Período: ${ultimoReporteData.periodo}`, 20, 32);
+      doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 20, 39);
       
-      const balances = computeBalances(accounts, journals, fechaInicio, fechaFin);
+      let yPosition = 50;
       
-      // Calcular resultado del ejercicio (Ingresos - Gastos - Costos)
-      let totalIngresos = 0;
-      let totalGastos = 0;
-      let totalCostos = 0;
-      let totalCostosSoftware = 0;
-      
-      for (const id in balances) {
-        const acc = balances[id].account;
-        const b = balances[id].balance;
-        
-        if (acc.type === 'ingreso') totalIngresos += -b;
-        if (acc.type === 'gasto') totalGastos += b;
-        if (acc.type === 'costo') totalCostos += b;
-        if (acc.type === 'costo_software') totalCostosSoftware += b;
+      switch(ultimoReporteTipo) {
+        case 'balance':
+          // PDF para Balance General
+          doc.setFont('helvetica', 'bold');
+          doc.text('BALANCE GENERAL', 20, yPosition);
+          yPosition += 10;
+          
+          doc.autoTable({
+            startY: yPosition,
+            head: [['Rubro', 'Monto ($)']],
+            body: [
+              ['Activo Total', ultimoReporteData.activo.toFixed(2)],
+              ['Pasivo Total', ultimoReporteData.pasivo.toFixed(2)],
+              ['Patrimonio', ultimoReporteData.patrimonio.toFixed(2)]
+            ],
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [0, 51, 102] }
+          });
+          break;
+          
+        case 'cif':
+          // PDF para CIF
+          doc.setFont('helvetica', 'bold');
+          doc.text('COSTOS INDIRECTOS DE FABRICACIÓN - SOFTWARE', 20, yPosition);
+          yPosition += 10;
+          
+          const cifBody = ultimoReporteData.detalle.map(item => 
+            [item.nombre, item.monto.toFixed(2)]
+          );
+          cifBody.push(['TOTAL CIF SOFTWARE', ultimoReporteData.total.toFixed(2)]);
+          
+          doc.autoTable({
+            startY: yPosition,
+            head: [['Concepto', 'Monto ($)']],
+            body: cifBody,
+            styles: { fontSize: 10 },
+            headStyles: { fillColor: [0, 51, 102] }
+          });
+          break;
+          
+        case 'analitico':
+          // PDF para Estado Analítico
+          doc.setFont('helvetica', 'bold');
+          doc.text('ESTADO ANALÍTICO DETALLADO', 20, yPosition);
+          yPosition += 10;
+          
+          let analiticoBody = [];
+          
+          // Agregar cada tipo de cuenta
+          for (const tipo in ultimoReporteData.tipos) {
+            if (ultimoReporteData.tipos[tipo].length > 0) {
+              // Encabezado del tipo
+              analiticoBody.push([{
+                content: tipo.toUpperCase(),
+                colSpan: 3,
+                styles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
+              }]);
+              
+              // Cuentas del tipo
+              ultimoReporteData.tipos[tipo].forEach(item => {
+                analiticoBody.push([
+                  item.nombre,
+                  item.monto.toFixed(2),
+                  tipo
+                ]);
+              });
+              
+              // Subtotal
+              const subtotal = ultimoReporteData.tipos[tipo].reduce((sum, item) => sum + item.monto, 0);
+              analiticoBody.push([
+                { content: `Subtotal ${tipo}`, styles: { fontStyle: 'bold' } },
+                { content: subtotal.toFixed(2), styles: { fontStyle: 'bold' } },
+                ''
+              ]);
+            }
+          }
+          
+          // Resumen final
+          analiticoBody.push([{
+            content: 'RESUMEN',
+            colSpan: 3,
+            styles: { fillColor: [224, 224, 224], fontStyle: 'bold' }
+          }]);
+          analiticoBody.push(['Total Ingresos', ultimoReporteData.ingresosTotal.toFixed(2), '']);
+          analiticoBody.push(['(-) Costos Directos', ultimoReporteData.costosTotal.toFixed(2), '']);
+          analiticoBody.push(['(-) Costos Software', ultimoReporteData.costoSoftwareTotal.toFixed(2), '']);
+          analiticoBody.push(['(-) Gastos Operativos', ultimoReporteData.gastosTotal.toFixed(2), '']);
+          analiticoBody.push([
+            { content: 'UTILIDAD NETA', styles: { fontStyle: 'bold' } },
+            { content: ultimoReporteData.utilidad.toFixed(2), styles: { fontStyle: 'bold' } },
+            ''
+          ]);
+          
+          doc.autoTable({
+            startY: yPosition,
+            head: [['Cuenta', 'Monto ($)', 'Tipo']],
+            body: analiticoBody,
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [0, 51, 102] },
+            alternateRowStyles: { fillColor: [248, 249, 250] }
+          });
+          break;
       }
       
-      const resultadoEjercicio = totalIngresos - totalGastos - totalCostos - totalCostosSoftware;
-      
-      let html = `<h4>Resultado del Cierre - ${periodo}</h4>
-                  <table style="width: 100%; border-collapse: collapse;">
-                    <tr style="background-color: #003366; color: white;">
-                      <th style="padding: 10px; border: 1px solid #ccc;">Concepto</th>
-                      <th style="padding: 10px; border: 1px solid #ccc;">Monto</th>
-                    </tr>
-                    <tr><td style="padding: 8px; border: 1px solid #ccc;">Total Ingresos</td><td style="padding: 8px; border: 1px solid #ccc;">${totalIngresos.toFixed(2)}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Total Gastos</td><td style="padding: 8px; border: 1px solid #ccc;">${totalGastos.toFixed(2)}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Total Costos</td><td style="padding: 8px; border: 1px solid #ccc;">${totalCostos.toFixed(2)}</td></tr>
-                    <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Total Costos Software</td><td style="padding: 8px; border: 1px solid #ccc;">${totalCostosSoftware.toFixed(2)}</td></tr>
-                    <tr style="background-color: #e9f0ff;">
-                      <td style="padding: 8px; border: 1px solid #ccc;"><strong>Resultado del Ejercicio</strong></td>
-                      <td style="padding: 8px; border: 1px solid #ccc;"><strong>${resultadoEjercicio.toFixed(2)}</strong></td>
-                    </tr>
-                  </table>`;
-      
-      document.getElementById('resultadoCierre').innerHTML = html;
+      // Guardar el PDF
+      doc.save(`Estado_Financiero_${ultimoReporteData.tipo.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
   </script>

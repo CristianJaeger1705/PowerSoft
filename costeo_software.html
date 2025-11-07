@@ -93,6 +93,7 @@
         <p>Costo por Punto: $<span id="costo_por_punto_display">0.00</span></p>
         <p>Costo Base: $<span id="costo_base">0.00</span></p>
         <p>Margen de Ganancia (40%): $<span id="margen_ganancia">0.00</span></p>
+        <p>IVA (13%): $<span id="iva_monto">0.00</span></p>
         <p><strong>Precio de Venta: $<span id="precio_venta">0.00</span></strong></p>
         
         <button class="btn-generar" id="generarTransaccion">Generar Transacción Contable</button>
@@ -232,44 +233,56 @@
         // 4. Calcular precios con el nuevo costo por punto
         const costoBase = totalPuntos * costoPorPunto;
         const margenGanancia = costoBase * 0.4;
-        const precioVenta = costoBase + margenGanancia;
-        
+        // Calcular IVA y precio total
+        const iva = (costoBase + margenGanancia) * 0.13;
+        const precioVenta = costoBase + margenGanancia + iva;
+
         // Actualizar la UI
         document.getElementById('costo_por_punto_display').textContent = costoPorPunto.toFixed(2);
         document.getElementById('costo_base').textContent = costoBase.toFixed(2);
         document.getElementById('margen_ganancia').textContent = margenGanancia.toFixed(2);
+        document.getElementById('iva_monto').textContent = iva.toFixed(2);
         document.getElementById('precio_venta').textContent = precioVenta.toFixed(2);
+
     }
 
     // Generar transacción contable
-    document.getElementById('generarTransaccion').addEventListener('click', function() {
-      const proyecto = document.getElementById('proyecto_nombre').value;
-      const precioVenta = parseFloat(document.getElementById('precio_venta').textContent);
-      const totalPuntos = parseInt(document.getElementById('total_puntos').textContent);
-      
-      if (!proyecto || precioVenta === 0) {
-        alert('Complete los datos del proyecto y asegúrese de calcular el precio de venta');
-        return;
-      }
+// Generar transacción contable con IVA incluido
+document.getElementById('generarTransaccion').addEventListener('click', function() {
+  const proyecto = document.getElementById('proyecto_nombre').value.trim();
+  const precioVenta = parseFloat(document.getElementById('precio_venta').textContent);
+  const totalPuntos = parseInt(document.getElementById('total_puntos').textContent);
 
-      // Guardar en localStorage para usar en transacciones
-      const transaccion = {
-        proyecto: proyecto,
-        precioVenta: precioVenta,
-        puntosFuncion: totalPuntos,
-        fecha: new Date().toISOString().split('T')[0],
-        tipo: 'venta_software'
-      };
-      
-      localStorage.setItem('ultimaTransaccionCosteo', JSON.stringify(transaccion));
-      
-      alert(`Transacción generada para el proyecto "${proyecto}"\nPrecio de venta: $${precioVenta.toFixed(2)}\n\nPuede registrar esta transacción en el módulo de transacciones.`);
-      
-      // Opcional: redirigir a transacciones
-      if (confirm('¿Desea ir al módulo de transacciones para registrar esta venta?')) {
-        window.location.href = 'transacciones.html';
-      }
-    });
+  if (!proyecto || isNaN(precioVenta) || precioVenta === 0) {
+    alert('Complete los datos del proyecto y asegúrese de calcular el precio de venta');
+    return;
+  }
+
+  // Calcular el IVA (13%) y el subtotal sin IVA
+  const iva = precioVenta * 0.13;
+  const subtotal = precioVenta; // tu precio actual es sin IVA
+  const totalConIVA = subtotal + iva;
+
+  // Crear el objeto de transacción contable con 3 cuentas
+  const transaccion = {
+    proyecto: proyecto,
+    fecha: new Date().toISOString().split('T')[0],
+    tipo: 'venta_software',
+    detalles: [
+      { cuenta: 'Banco', tipo: 'Debe', monto: subtotal },
+      { cuenta: 'IVA Débito Fiscal', tipo: 'Haber', monto: iva },
+      { cuenta: 'Ingresos por Venta de Software', tipo: 'Haber', monto: totalConIVA }
+    ]
+  };
+
+  // Guardar en localStorage
+  localStorage.setItem('ultimaTransaccionCosteo', JSON.stringify(transaccion));
+
+  // Redirigir automáticamente
+  window.location.href = 'transacciones.html';
+});
+
+
 
     // Agregar event listeners a todos los inputs
     document.addEventListener('DOMContentLoaded', function() {
