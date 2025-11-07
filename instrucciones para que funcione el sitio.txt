@@ -1,0 +1,4 @@
+abrir la consola y ubicarse en 
+C:\Nginx\html\PowerSoft
+luego pegar el siguiente comando para iniciar el json server (base de datos simulada)
+json-server --watch db.json --port 3000
