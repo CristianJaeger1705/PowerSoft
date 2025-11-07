@@ -104,14 +104,14 @@
   <script>
     // FUNCIÓN PARA CALCULAR COSTOS DE EQUIPO
     function calcularCostosEquipo() {
-        const salariosBase = 11300; // $11,300
+        const salariosBase = 10300; // $11,300
         const aguinaldo = salariosBase * 0.0833; // 8.33%
         const vacaciones = salariosBase * 0.0417; // 4.17%
         const indemnizaciones = salariosBase * 0.05; // 5%
         const cargasSociales = salariosBase * 0.15; // 15%
         
         const costoMensualTotal = salariosBase + aguinaldo + vacaciones + indemnizaciones + cargasSociales;
-        const horasProductivasMensuales = 720; // 6 personas × 20 días × 6 horas
+        const horasProductivasMensuales = 600; // 5 personas × 20 días × 6 horas
         const costoHora = costoMensualTotal / horasProductivasMensuales;
         
         return {
@@ -140,7 +140,7 @@
             <div class="panel-costos">
                 <h4>💼 Costos de Equipo - PowerSoft</h4>
                 <table>
-                    <tr><td>Salarios base (6 personas):</td><td>$${costosEquipo.salariosBase.toFixed(2)}</td></tr>
+                    <tr><td>Salarios base (5 personas):</td><td>$${costosEquipo.salariosBase.toFixed(2)}</td></tr>
                     <tr><td>Aguinaldo (8.33%):</td><td>$${costosEquipo.aguinaldo.toFixed(2)}</td></tr>
                     <tr><td>Vacaciones (4.17%):</td><td>$${costosEquipo.vacaciones.toFixed(2)}</td></tr>
                     <tr><td>Indemnizaciones (5%):</td><td>$${costosEquipo.indemnizaciones.toFixed(2)}</td></tr>

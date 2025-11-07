@@ -71,7 +71,47 @@
     </section>
   </main>
 
-  
+  <!-- NUEVA SECCIÓN: REGISTRO DE COSTOS POR PROYECTO -->
+<section class="card">
+  <h3>Registro de Costos por Proyecto</h3>
+  <form id="costForm">
+    <label>Proyecto: 
+      <select id="costProject" required>
+        <option value="">Seleccionar proyecto</option>
+      </select>
+    </label>
+    
+    <label>Tipo de Costo:
+      <select id="costType" required>
+        <option value="">Seleccionar tipo</option>
+        <option value="directo">Costo Directo</option>
+        <option value="indirecto">Costo Indirecto (CIF)</option>
+      </select>
+    </label>
+    
+    <label>Categoría de Costo:
+      <select id="costCategory" required>
+        <option value="">Seleccionar categoría</option>
+      </select>
+    </label>
+    
+    <label>Descripción: <input type="text" id="costDesc" required></label>
+    <label>Monto: $<input type="number" id="costAmount" step="0.01" required></label>
+    <label>Fecha: <input type="date" id="costDate" required></label>
+    
+    <button type="submit">Registrar Costo</button>
+  </form>
+  <div id="costMsg" class="msg"></div>
+</section>
+
+<!-- SECCIÓN: ASIGNACIÓN AUTOMÁTICA DE CIF -->
+<section class="card">
+  <h3>Asignación de Costos Indirectos (CIF)</h3>
+  <button onclick="distribuirCIF()">Distribuir CIF a Proyectos</button>
+  <div id="cifResults"></div>
+</section>
+
+
 <script>
 const API = 'http://localhost:3000';
 if (!sessionStorage.getItem('ps_user')) location.href = 'login.html';
@@ -306,9 +346,137 @@ function cargarTransaccionDesdeCosteo() {
   }
 }
 window.addEventListener('load', cargarTransaccionDesdeCosteo);
-</script>
+
+//////////////////////////////////////////////////////////////////////////
+// ========== SISTEMA DE GESTIÓN DE COSTOS ==========
+
+// Cargar categorías de costo
+async function loadCostCategories() {
+  try {
+    const res = await fetch(API + '/cost_categories');
+    return await res.json();
+  } catch (error) {
+    console.error('Error cargando categorías:', error);
+    return [];
+  }
+}
+
+// Cargar proyectos para select
+async function loadProjectsForCosts() {
+  const res = await fetch(API + '/journals');
+  const journals = await res.json();
+  const projects = [...new Set(journals.map(j => j.project).filter(p => p))];
+  
+  const select = document.getElementById('costProject');
+  select.innerHTML = '<option value="">Seleccionar proyecto</option>' + 
+    projects.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+// Cargar categorías según tipo seleccionado
+document.getElementById('costType').addEventListener('change', async function() {
+  const type = this.value;
+  const categories = await loadCostCategories();
+  const filtered = categories.filter(c => c.type === type);
+  
+  const select = document.getElementById('costCategory');
+  select.innerHTML = '<option value="">Seleccionar categoría</option>' + 
+    filtered.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+});
+
+// Registrar nuevo costo
+document.getElementById('costForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const costData = {
+    project: document.getElementById('costProject').value,
+    cost_category_id: document.getElementById('costCategory').value,
+    amount: parseFloat(document.getElementById('costAmount').value),
+    date: document.getElementById('costDate').value,
+    description: document.getElementById('costDesc').value,
+    type: document.getElementById('costType').value
+  };
+
+  try {
+    const res = await fetch(API + '/project_costs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(costData)
+    });
+
+    if (res.ok) {
+      document.getElementById('costMsg').textContent = 'Costo registrado exitosamente';
+      document.getElementById('costMsg').style.color = 'green';
+      document.getElementById('costForm').reset();
+    }
+  } catch (error) {
+    document.getElementById('costMsg').textContent = 'Error registrando costo';
+    document.getElementById('costMsg').style.color = 'crimson';
+  }
+});
+
+// ========== DISTRIBUCIÓN AUTOMÁTICA DE CIF ==========
+
+async function distribuirCIF() {
+  // 1. Obtener costos indirectos del período
+  const costsRes = await fetch(API + '/project_costs?type=indirecto');
+  const indirectCosts = await costsRes.json();
+  
+  // 2. Obtener proyectos activos
+  const journalsRes = await fetch(API + '/journals');
+  const journals = await journalsRes.json();
+  const projects = [...new Set(journals.map(j => j.project).filter(p => p))];
+  
+  // 3. Calcular base de distribución (horas por proyecto)
+  const projectHours = {};
+  projects.forEach(project => {
+    // Simular horas - en realidad esto vendría de timesheets
+    projectHours[project] = Math.random() * 200 + 100; // 100-300 horas
+  });
+  
+  // 4. Calcular total de horas
+  const totalHours = Object.values(projectHours).reduce((a, b) => a + b, 0);
+  
+  // 5. Calcular total CIF
+  const totalCIF = indirectCosts.reduce((sum, cost) => sum + cost.amount, 0);
+  
+  // 6. Distribuir CIF
+  let resultsHTML = `<h4>Distribución de CIF - Total: $${totalCIF.toFixed(2)}</h4>`;
+  resultsHTML += '<table style="width:100%; border-collapse:collapse; margin-top:10px;">';
+  resultsHTML += '<tr style="background:#003366; color:white;"><th>Proyecto</th><th>Horas</th><th>% Distribución</th><th>CIF Asignado</th></tr>';
+  
+  for (const project of projects) {
+    const hours = projectHours[project];
+    const percentage = (hours / totalHours) * 100;
+    const cifAssigned = (totalCIF * percentage) / 100;
+    
+    resultsHTML += `
+      <tr>
+        <td style="border:1px solid #ccc; padding:8px;">${project}</td>
+        <td style="border:1px solid #ccc; padding:8px;">${hours.toFixed(0)}</td>
+        <td style="border:1px solid #ccc; padding:8px;">${percentage.toFixed(2)}%</td>
+        <td style="border:1px solid #ccc; padding:8px;">$${cifAssigned.toFixed(2)}</td>
+      </tr>
+    `;
+  }
+  
+  resultsHTML += '</table>';
+  document.getElementById('cifResults').innerHTML = resultsHTML;
+}
+
+// ========== INICIALIZACIÓN ==========
+
+// Agregar esta llamada a la inicialización existente
+async function initializeCostSystem() {
+  await loadProjectsForCosts();
+  await loadCostCategories();
+}
+
+// Llamar después de que cargue la página
+setTimeout(initializeCostSystem, 1000);
 
 </script>
+
+
 
 </body>
 </html>

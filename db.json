@@ -169,17 +169,17 @@
       "desc": "Facturación#001 - Hotel Paradise  50% anticipo",
       "entries": [
         {
-          "accountId": 5,
+          "accountId": "3bac",
           "debit": 13701.19,
           "credit": 0
         },
         {
-          "accountId": 1067,
+          "accountId": "1067",
           "debit": 0,
           "credit": 11611.18
         },
         {
-          "accountId": 2165,
+          "accountId": "2165",
           "debit": 0,
           "credit": 2090.01
         }
@@ -194,12 +194,12 @@
       "desc": "Pago de Nómina de desarrolladores",
       "entries": [
         {
-          "accountId": null,
+          "accountId": "c96e",
           "debit": 12995,
           "credit": 0
         },
         {
-          "accountId": 9886,
+          "accountId": "9886",
           "debit": 0,
           "credit": 12995
         }
@@ -214,17 +214,17 @@
       "desc": "Licencias Visual Studio, JetBrains",
       "entries": [
         {
-          "accountId": null,
+          "accountId": "c380",
           "debit": 1200,
           "credit": 0
         },
         {
-          "accountId": null,
+          "accountId": "a055",
           "debit": 156,
           "credit": 0
         },
         {
-          "accountId": 9886,
+          "accountId": "9886",
           "debit": 0,
           "credit": 1356
         }
@@ -239,17 +239,17 @@
       "desc": "Pago AWS, Azure-Entorno de desarrollo",
       "entries": [
         {
-          "accountId": 67,
+          "accountId": "67de",
           "debit": 450,
           "credit": 0
         },
         {
-          "accountId": null,
+          "accountId": "a055",
           "debit": 58.5,
           "credit": 0
         },
         {
-          "accountId": 9886,
+          "accountId": "9886",
           "debit": 0,
           "credit": 508.5
         }
@@ -264,22 +264,22 @@
       "desc": "Gastos operativos de Enero",
       "entries": [
         {
-          "accountId": 9877,
+          "accountId": "9877",
           "debit": 800,
           "credit": 0
         },
         {
-          "accountId": null,
+          "accountId": "d914",
           "debit": 120,
           "credit": 0
         },
         {
-          "accountId": 4,
+          "accountId": "4a97",
           "debit": 300,
           "credit": 0
         },
         {
-          "accountId": 9886,
+          "accountId": "9886",
           "debit": 0,
           "credit": 1220
         }
@@ -299,7 +299,7 @@
           "credit": 0
         },
         {
-          "accountId": 2,
+          "accountId": "9886",
           "debit": 0,
           "credit": 1200
         }
@@ -309,24 +309,29 @@
       "functionPoints": null
     },
     {
-      "id": "7536",
+      "id": "e7ec",
       "date": "2025-11-06",
-      "desc": "prueba",
+      "desc": "Facturación #002",
       "entries": [
         {
-          "accountId": "2c86",
-          "debit": 1200,
+          "accountId": "9886",
+          "debit": 24633.95,
           "credit": 0
+        },
+        {
+          "accountId": "1067",
+          "debit": 0,
+          "credit": 21799.96
         },
         {
           "accountId": "2165",
           "debit": 0,
-          "credit": 1200
+          "credit": 2833.99
         }
       ],
-      "project": null,
-      "costMethod": null,
-      "functionPoints": null
+      "project": "Tienda Online Moda Express",
+      "costMethod": "ifpug",
+      "functionPoints": 416
     }
   ],
   "users": [
@@ -334,6 +339,171 @@
       "id": "1",
       "username": "admin",
       "password": "admin123"
+    }
+  ],
+  "cost_categories": [
+    {
+      "id": "1",
+      "name": "Mano de Obra Directa",
+      "type": "directo",
+      "distribution_base": "horas"
+    },
+    {
+      "id": "2",
+      "name": "Licencias Específicas",
+      "type": "directo",
+      "distribution_base": "proyecto"
+    },
+    {
+      "id": "3",
+      "name": "Hardware Dedicado",
+      "type": "directo",
+      "distribution_base": "proyecto"
+    },
+    {
+      "id": "4",
+      "name": "Consultoría Externa",
+      "type": "directo",
+      "distribution_base": "proyecto"
+    },
+    {
+      "id": "5",
+      "name": "Sueldos Indirectos",
+      "type": "indirecto",
+      "distribution_base": "horas"
+    },
+    {
+      "id": "6",
+      "name": "Alquiler Oficina",
+      "type": "indirecto",
+      "distribution_base": "metros_cuadrados"
+    },
+    {
+      "id": "7",
+      "name": "Servicios Básicos",
+      "type": "indirecto",
+      "distribution_base": "horas"
+    },
+    {
+      "id": "8",
+      "name": "Licencias Generales",
+      "type": "indirecto",
+      "distribution_base": "usuarios"
+    },
+    {
+      "id": "9",
+      "name": "Capacitación General",
+      "type": "indirecto",
+      "distribution_base": "empleados"
+    }
+  ],
+  "project_costs": [
+    {
+      "id": "1",
+      "project": "Sistema Hotelero integral",
+      "cost_category_id": "1",
+      "amount": 15000,
+      "date": "2025-01-15",
+      "description": "Mano de obra desarrollo equipo completo",
+      "type": "directo"
+    },
+    {
+      "id": "2",
+      "project": "Sistema Hotelero integral",
+      "cost_category_id": "2",
+      "amount": 3500,
+      "date": "2025-01-20",
+      "description": "Licencias base de datos Oracle",
+      "type": "directo"
+    },
+    {
+      "id": "3",
+      "project": null,
+      "cost_category_id": "5",
+      "amount": 8000,
+      "date": "2025-01-31",
+      "description": "Sueldos administración y gerencia",
+      "type": "indirecto"
+    },
+    {
+      "id": "4",
+      "project": null,
+      "cost_category_id": "6",
+      "amount": 1200,
+      "date": "2025-01-31",
+      "description": "Alquiler oficina centro empresarial",
+      "type": "indirecto"
+    },
+    {
+      "id": "87a3",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "1",
+      "amount": 8000,
+      "date": "2025-11-06",
+      "description": "Desarrollo Frontend y Backend",
+      "type": "directo"
+    },
+    {
+      "id": "8128",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "2",
+      "amount": 1200,
+      "date": "2025-11-06",
+      "description": "Licencias pasarela de pagos",
+      "type": "directo"
+    },
+    {
+      "id": "34c9",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "3",
+      "amount": 2500,
+      "date": "2025-11-06",
+      "description": "Servidor dedicado E-commerce",
+      "type": "directo"
+    },
+    {
+      "id": "ed44",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "5",
+      "amount": 6000,
+      "date": "2025-11-06",
+      "description": "Salarios gerencia y administración",
+      "type": "indirecto"
+    },
+    {
+      "id": "8c5c",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "6",
+      "amount": 800,
+      "date": "2025-11-06",
+      "description": "Alquiler espacio trabajo de Noviembre",
+      "type": "indirecto"
+    },
+    {
+      "id": "f480",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "7",
+      "amount": 350,
+      "date": "2025-11-06",
+      "description": "Luz, internet, agua febrero",
+      "type": "indirecto"
+    }
+  ],
+  "cost_centers": [
+    {
+      "id": "1",
+      "name": "Desarrollo Software",
+      "cif_rate": 0.3
+    },
+    {
+      "id": "2",
+      "name": "Soporte Técnico",
+      "cif_rate": 0.25
+    },
+    {
+      "id": "3",
+      "name": "Administración",
+      "cif_rate": 0.35
     }
   ]
 }

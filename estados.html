@@ -51,6 +51,7 @@
       <!-- <button id="calcEr">Generar Estado de Resultados</button> -->
       <button id="calcCif">Calcular CIF de Software</button>
       <button id="calcAnalitico">Estado Analítico Detallado</button>
+      <button id="calcCostos">Análisis de Costos por Proyecto</button>
       <!-- <button id="calcMayor">Generar Libro Mayor</button> -->
       <!-- <button id="calcCierre">Cierre Contable</button> -->
     </section>
@@ -155,6 +156,10 @@
       document.getElementById('output').innerHTML = crearFiltrosPeriodo('Estado Analítico Detallado', 'generarEstadoAnalitico');
     });
 
+    // Análisis de Costos por Proyecto (activo)
+    document.getElementById('calcCostos').addEventListener('click', async ()=>{
+    document.getElementById('output').innerHTML = crearFiltrosPeriodo('Análisis de Costos por Proyecto', 'generarAnalisisCostos');
+    });
     // ========== FUNCIONES PARA BOTONES ACTIVOS ==========
 
     async function generarBalanceGlobal() {
@@ -279,238 +284,429 @@
     }
 
     async function generarEstadoAnalitico() {
-      const {accounts, journals} = await loadData();
-      const fechaInicio = document.getElementById('fechaInicio').value;
-      const fechaFin = document.getElementById('fechaFin').value;
-      
-      const balances = computeBalances(accounts, journals, fechaInicio, fechaFin);
-      
-      const periodo = fechaInicio ? ` del ${fechaInicio} al ${fechaFin}` : ' (Todos los períodos)';
-      let html = `<h4>Estado Analítico Detallado${periodo}</h4>`;
-      
-      // Agrupar por tipo de cuenta
-      const tipos = {
-        activo: [], pasivo: [], patrimonio: [],
-        ingreso: [], costo: [], gasto: [], costo_software: []
-      };
-      
-      for (const id in balances) {
-        const acc = balances[id].account;
-        const b = balances[id].balance;
-        const monto = (acc.type === 'ingreso') ? -b : b;
-        
-        if (tipos[acc.type] && monto !== 0) {
-          tipos[acc.type].push({
-            nombre: `${acc.code} - ${acc.name}`,
-            monto: monto
-          });
-        }
-      }
-      
-      html += `<table style="width: 100%; border-collapse: collapse;">
-                <tr style="background-color: #003366; color: white;">
-                  <th style="padding: 10px; border: 1px solid #ccc;">Cuenta</th>
-                  <th style="padding: 10px; border: 1px solid #ccc;">Monto</th>
-                  <th style="padding: 10px; border: 1px solid #ccc;">Tipo</th>
-                </tr>`;
-      
-      for (const tipo in tipos) {
-        if (tipos[tipo].length > 0) {
-          html += `<tr>
-                    <td colspan="3" style="background-color:#f0f0f0; font-weight:bold; padding: 8px; border: 1px solid #ccc;">
-                      ${tipo.toUpperCase()}
-                    </td>
-                  </tr>`;
-          
-          let subtotal = 0;
-          tipos[tipo].forEach(item => {
-            html += `<tr>
-                      <td style="padding: 8px; border: 1px solid #ccc;">${item.nombre}</td>
-                      <td style="padding: 8px; border: 1px solid #ccc;">${item.monto.toFixed(2)}</td>
-                      <td style="padding: 8px; border: 1px solid #ccc;">${tipo}</td>
-                    </tr>`;
-            subtotal += item.monto;
-          });
-          
-          html += `<tr style="background-color: #f8f9fa;">
-                    <td style="padding: 8px; border: 1px solid #ccc;"><strong>Subtotal ${tipo}</strong></td>
-                    <td style="padding: 8px; border: 1px solid #ccc;"><strong>${subtotal.toFixed(2)}</strong></td>
-                    <td style="padding: 8px; border: 1px solid #ccc;"></td>
-                  </tr>`;
-        }
-      }
-      
-      // Calcular utilidad
-      const ingresosTotal = tipos.ingreso.reduce((sum, item) => sum + item.monto, 0);
-      const costosTotal = tipos.costo.reduce((sum, item) => sum + item.monto, 0);
-      const gastosTotal = tipos.gasto.reduce((sum, item) => sum + item.monto, 0);
-      const costoSoftwareTotal = tipos.costo_software.reduce((sum, item) => sum + item.monto, 0);
-      
-      const utilidad = ingresosTotal - costosTotal - gastosTotal - costoSoftwareTotal;
-      
-      html += `<tr>
-                <td colspan="3" style="background-color:#e0e0e0; font-weight:bold; padding: 8px; border: 1px solid #ccc;">
-                  RESUMEN
-                </td>
-              </tr>
-              <tr><td style="padding: 8px; border: 1px solid #ccc;">Total Ingresos</td><td style="padding: 8px; border: 1px solid #ccc;">${ingresosTotal.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
-              <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Costos Directos</td><td style="padding: 8px; border: 1px solid #ccc;">${costosTotal.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
-              <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Costos Software</td><td style="padding: 8px; border: 1px solid #ccc;">${costoSoftwareTotal.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
-              <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Gastos Operativos</td><td style="padding: 8px; border: 1px solid #ccc;">${gastosTotal.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
-              <tr style="background-color: #e9f0ff;">
-                <td style="padding: 8px; border: 1px solid #ccc;"><strong>UTILIDAD NETA</strong></td>
-                <td style="padding: 8px; border: 1px solid #ccc;"><strong>${utilidad.toFixed(2)}</strong></td>
-                <td style="padding: 8px; border: 1px solid #ccc;"></td>
-              </tr>
-              </table>`;
-      
-      document.getElementById('resultadoReporte').innerHTML = html;
-      
-      // Guardar datos para PDF
-      ultimoReporteData = {
-        tipo: 'Estado Analítico Detallado',
-        periodo: periodo,
-        tipos: tipos,
-        ingresosTotal: ingresosTotal,
-        costosTotal: costosTotal,
-        gastosTotal: gastosTotal,
-        costoSoftwareTotal: costoSoftwareTotal,
-        utilidad: utilidad
-      };
-      ultimoReporteTipo = 'analitico';
-      document.getElementById('btnPDF').style.display = 'inline-block';
+  const {accounts, journals} = await loadData();
+  const fechaInicio = document.getElementById('fechaInicio').value;
+  const fechaFin = document.getElementById('fechaFin').value;
+  
+  // 🆕 CARGAR COSTOS REGISTRADOS
+  const costsRes = await fetch(API + '/project_costs');
+  const projectCosts = await costsRes.json();
+  
+  const balances = computeBalances(accounts, journals, fechaInicio, fechaFin);
+  
+  const periodo = fechaInicio ? ` del ${fechaInicio} al ${fechaFin}` : ' (Todos los períodos)';
+  let html = `<h4>Estado Analítico Detallado${periodo}</h4>`;
+  
+  // Agrupar por tipo de cuenta
+  const tipos = {
+    activo: [], pasivo: [], patrimonio: [],
+    ingreso: [], costo: [], gasto: [], costo_software: []
+  };
+  
+  // 🆕 CONTADORES PARA COSTOS ESPECÍFICOS
+  let totalCostosDirectos = 0;
+  let totalCostosSoftware = 0;
+  let totalCIF = 0;
+  let totalGastosOperativos = 0;
+  
+  // 1. PROCESAR JOURNALS TRADICIONALES
+  for (const id in balances) {
+    const acc = balances[id].account;
+    const b = balances[id].balance;
+    const monto = (acc.type === 'ingreso') ? -b : b;
+    
+    if (tipos[acc.type] && monto !== 0) {
+      tipos[acc.type].push({
+        nombre: `${acc.code} - ${acc.name}`,
+        monto: monto
+      });
     }
+  }
+  
+  // 🆕 2. PROCESAR COSTOS REGISTRADOS EN EL NUEVO SISTEMA
+  projectCosts.forEach(cost => {
+    // Aplicar filtro de fecha si existe
+    if (fechaInicio && cost.date < fechaInicio) return;
+    if (fechaFin && cost.date > fechaFin) return;
+    
+    let tipoCuenta = '';
+    let esDirecto = cost.type === 'directo';
+    
+    // Clasificar el costo según su categoría
+    switch(cost.cost_category_id) {
+      case '1': // Mano de Obra Directa
+      case '2': // Licencias Específicas  
+      case '3': // Hardware Dedicado
+      case '4': // Consultoría Externa
+        tipoCuenta = esDirecto ? 'costo' : 'costo_software';
+        if (esDirecto) totalCostosDirectos += cost.amount;
+        else totalCostosSoftware += cost.amount;
+        break;
+        
+      case '5': // Sueldos Indirectos
+      case '6': // Alquiler Oficina
+      case '7': // Servicios Básicos
+      case '8': // Licencias Generales
+      case '9': // Capacitación General
+        tipoCuenta = 'gasto';
+        totalCIF += cost.amount;
+        break;
+    }
+    
+    if (tipoCuenta) {
+      tipos[tipoCuenta].push({
+        nombre: `🆕 ${cost.description} (${cost.project || 'General'})`,
+        monto: cost.amount
+      });
+    }
+  });
+  
+  // 🆕 3. CALCULAR GASTOS OPERATIVOS (gastos que no son CIF)
+  totalGastosOperativos = tipos.gasto.reduce((sum, item) => {
+    // Excluir los gastos que ya contamos como CIF
+    const esGastoOperativo = !item.nombre.includes('🆕');
+    return esGastoOperativo ? sum + item.monto : sum;
+  }, 0);
+  
+  html += `<table style="width: 100%; border-collapse: collapse;">
+            <tr style="background-color: #003366; color: white;">
+              <th style="padding: 10px; border: 1px solid #ccc;">Cuenta</th>
+              <th style="padding: 10px; border: 1px solid #ccc;">Monto</th>
+              <th style="padding: 10px; border: 1px solid #ccc;">Tipo</th>
+            </tr>`;
+  
+  for (const tipo in tipos) {
+    if (tipos[tipo].length > 0) {
+      html += `<tr>
+                <td colspan="3" style="background-color:#f0f0f0; font-weight:bold; padding: 8px; border: 1px solid #ccc;">
+                  ${tipo.toUpperCase()}
+                </td>
+              </tr>`;
+      
+      let subtotal = 0;
+      tipos[tipo].forEach(item => {
+        html += `<tr>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${item.nombre}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${item.monto.toFixed(2)}</td>
+                  <td style="padding: 8px; border: 1px solid #ccc;">${tipo}</td>
+                </tr>`;
+        subtotal += item.monto;
+      });
+      
+      html += `<tr style="background-color: #f8f9fa;">
+                <td style="padding: 8px; border: 1px solid #ccc;"><strong>Subtotal ${tipo}</strong></td>
+                <td style="padding: 8px; border: 1px solid #ccc;"><strong>${subtotal.toFixed(2)}</strong></td>
+                <td style="padding: 8px; border: 1px solid #ccc;"></td>
+              </tr>`;
+    }
+  }
+  
+  // 🆕 4. RESUMEN MEJORADO CON TODOS LOS COSTOS
+  const ingresosTotal = tipos.ingreso.reduce((sum, item) => sum + item.monto, 0);
+  const costosTotal = tipos.costo.reduce((sum, item) => sum + item.monto, 0);
+  const gastosTotal = tipos.gasto.reduce((sum, item) => sum + item.monto, 0);
+  const costoSoftwareTotal = tipos.costo_software.reduce((sum, item) => sum + item.monto, 0);
+  
+  // 🆕 USAR LOS TOTALES CALCULADOS ESPECÍFICAMENTE
+  const utilidad = ingresosTotal - totalCostosDirectos - totalCostosSoftware - totalCIF - totalGastosOperativos;
+  
+  html += `<tr>
+            <td colspan="3" style="background-color:#e0e0e0; font-weight:bold; padding: 8px; border: 1px solid #ccc;">
+              RESUMEN MEJORADO
+            </td>
+          </tr>
+          <tr><td style="padding: 8px; border: 1px solid #ccc;">Total Ingresos</td><td style="padding: 8px; border: 1px solid #ccc;">${ingresosTotal.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Costos Directos</td><td style="padding: 8px; border: 1px solid #ccc;">${totalCostosDirectos.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Costos Software</td><td style="padding: 8px; border: 1px solid #ccc;">${totalCostosSoftware.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Costos Indirectos (CIF)</td><td style="padding: 8px; border: 1px solid #ccc;">${totalCIF.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
+          <tr><td style="padding: 8px; border: 1px solid #ccc;">(-) Gastos Operativos</td><td style="padding: 8px; border: 1px solid #ccc;">${totalGastosOperativos.toFixed(2)}</td><td style="padding: 8px; border: 1px solid #ccc;"></td></tr>
+          <tr style="background-color: #e9f0ff;">
+            <td style="padding: 8px; border: 1px solid #ccc;"><strong>UTILIDAD NETA REAL</strong></td>
+            <td style="padding: 8px; border: 1px solid #ccc;"><strong>${utilidad.toFixed(2)}</strong></td>
+            <td style="padding: 8px; border: 1px solid #ccc;"></td>
+          </tr>
+          </table>`;
+  
+  // 🆕 5. COMPARATIVA: UTILIDAD ESTIMADA vs REAL
+  html += `<div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+            <h4>📊 COMPARATIVA DE RENTABILIDAD</h4>
+            <p><strong>Utilidad Estimada (sin CIF):</strong> $${(ingresosTotal - totalCostosDirectos - totalCostosSoftware).toFixed(2)}</p>
+            <p><strong>Utilidad Real (con CIF):</strong> $${utilidad.toFixed(2)}</p>
+            <p><strong>Diferencia:</strong> $${(totalCIF + totalGastosOperativos).toFixed(2)}</p>
+            <small>💡 <em>Los costos indirectos reducen la utilidad real en un ${((totalCIF + totalGastosOperativos) / ingresosTotal * 100).toFixed(1)}%</em></small>
+          </div>`;
+  
+  document.getElementById('resultadoReporte').innerHTML = html;
+  
+  // Guardar datos para PDF
+  ultimoReporteData = {
+    tipo: 'Estado Analítico Detallado Mejorado',
+    periodo: periodo,
+    tipos: tipos,
+    ingresosTotal: ingresosTotal,
+    costosDirectos: totalCostosDirectos,
+    costosSoftware: totalCostosSoftware,
+    cif: totalCIF,
+    gastosOperativos: totalGastosOperativos,
+    utilidad: utilidad
+  };
+  ultimoReporteTipo = 'analitico';
+  document.getElementById('btnPDF').style.display = 'inline-block';
+}
 
     // ========== FUNCIÓN PARA GENERAR PDF ==========
-    function generarPDF() {
-      if (!ultimoReporteData) {
-        alert('No hay datos para generar PDF. Genere primero un reporte.');
-        return;
-      }
+function generarPDF() {
+  if (!ultimoReporteData) {
+    alert('No hay datos para generar PDF. Genere primero un reporte.');
+    return;
+  }
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
-      
-      // Configuración inicial del documento
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  
+  // Configuración inicial del documento
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('POWERSOFT - ESTADO FINANCIERO', 105, 15, { align: 'center' });
+  
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Tipo: ${ultimoReporteData.tipo}`, 20, 25);
+  doc.text(`Período: ${ultimoReporteData.periodo}`, 20, 32);
+  doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 20, 39);
+  
+  let yPosition = 50;
+  
+  switch(ultimoReporteTipo) {
+    case 'balance':
+      // PDF para Balance General (sin cambios)
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(16);
-      doc.text('POWERSOFT - ESTADO FINANCIERO', 105, 15, { align: 'center' });
+      doc.text('BALANCE GENERAL', 20, yPosition);
+      yPosition += 10;
       
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Tipo: ${ultimoReporteData.tipo}`, 20, 25);
-      doc.text(`Período: ${ultimoReporteData.periodo}`, 20, 32);
-      doc.text(`Fecha de generación: ${new Date().toLocaleDateString()}`, 20, 39);
+      doc.autoTable({
+        startY: yPosition,
+        head: [['Rubro', 'Monto ($)']],
+        body: [
+          ['Activo Total', ultimoReporteData.activo.toFixed(2)],
+          ['Pasivo Total', ultimoReporteData.pasivo.toFixed(2)],
+          ['Patrimonio', ultimoReporteData.patrimonio.toFixed(2)]
+        ],
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [0, 51, 102] }
+      });
+      break;
       
-      let yPosition = 50;
+    case 'cif':
+      // PDF para CIF (sin cambios)
+      doc.setFont('helvetica', 'bold');
+      doc.text('COSTOS INDIRECTOS DE FABRICACIÓN - SOFTWARE', 20, yPosition);
+      yPosition += 10;
       
-      switch(ultimoReporteTipo) {
-        case 'balance':
-          // PDF para Balance General
-          doc.setFont('helvetica', 'bold');
-          doc.text('BALANCE GENERAL', 20, yPosition);
-          yPosition += 10;
-          
-          doc.autoTable({
-            startY: yPosition,
-            head: [['Rubro', 'Monto ($)']],
-            body: [
-              ['Activo Total', ultimoReporteData.activo.toFixed(2)],
-              ['Pasivo Total', ultimoReporteData.pasivo.toFixed(2)],
-              ['Patrimonio', ultimoReporteData.patrimonio.toFixed(2)]
-            ],
-            styles: { fontSize: 10 },
-            headStyles: { fillColor: [0, 51, 102] }
-          });
-          break;
-          
-        case 'cif':
-          // PDF para CIF
-          doc.setFont('helvetica', 'bold');
-          doc.text('COSTOS INDIRECTOS DE FABRICACIÓN - SOFTWARE', 20, yPosition);
-          yPosition += 10;
-          
-          const cifBody = ultimoReporteData.detalle.map(item => 
-            [item.nombre, item.monto.toFixed(2)]
-          );
-          cifBody.push(['TOTAL CIF SOFTWARE', ultimoReporteData.total.toFixed(2)]);
-          
-          doc.autoTable({
-            startY: yPosition,
-            head: [['Concepto', 'Monto ($)']],
-            body: cifBody,
-            styles: { fontSize: 10 },
-            headStyles: { fillColor: [0, 51, 102] }
-          });
-          break;
-          
-        case 'analitico':
-          // PDF para Estado Analítico
-          doc.setFont('helvetica', 'bold');
-          doc.text('ESTADO ANALÍTICO DETALLADO', 20, yPosition);
-          yPosition += 10;
-          
-          let analiticoBody = [];
-          
-          // Agregar cada tipo de cuenta
-          for (const tipo in ultimoReporteData.tipos) {
-            if (ultimoReporteData.tipos[tipo].length > 0) {
-              // Encabezado del tipo
-              analiticoBody.push([{
-                content: tipo.toUpperCase(),
-                colSpan: 3,
-                styles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
-              }]);
-              
-              // Cuentas del tipo
-              ultimoReporteData.tipos[tipo].forEach(item => {
-                analiticoBody.push([
-                  item.nombre,
-                  item.monto.toFixed(2),
-                  tipo
-                ]);
-              });
-              
-              // Subtotal
-              const subtotal = ultimoReporteData.tipos[tipo].reduce((sum, item) => sum + item.monto, 0);
-              analiticoBody.push([
-                { content: `Subtotal ${tipo}`, styles: { fontStyle: 'bold' } },
-                { content: subtotal.toFixed(2), styles: { fontStyle: 'bold' } },
-                ''
-              ]);
-            }
-          }
-          
-          // Resumen final
+      const cifBody = ultimoReporteData.detalle.map(item => 
+        [item.nombre, item.monto.toFixed(2)]
+      );
+      cifBody.push(['TOTAL CIF SOFTWARE', ultimoReporteData.total.toFixed(2)]);
+      
+      doc.autoTable({
+        startY: yPosition,
+        head: [['Concepto', 'Monto ($)']],
+        body: cifBody,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [0, 51, 102] }
+      });
+      break;
+      
+    case 'analitico':
+      // 🆕 PDF MEJORADO para Estado Analítico
+      doc.setFont('helvetica', 'bold');
+      doc.text('ESTADO ANALÍTICO DETALLADO MEJORADO', 20, yPosition);
+      yPosition += 10;
+      
+      let analiticoBody = [];
+      
+      // Agregar cada tipo de cuenta
+      for (const tipo in ultimoReporteData.tipos) {
+        if (ultimoReporteData.tipos[tipo].length > 0) {
+          // Encabezado del tipo
           analiticoBody.push([{
-            content: 'RESUMEN',
+            content: tipo.toUpperCase(),
             colSpan: 3,
-            styles: { fillColor: [224, 224, 224], fontStyle: 'bold' }
+            styles: { fillColor: [240, 240, 240], fontStyle: 'bold' }
           }]);
-          analiticoBody.push(['Total Ingresos', ultimoReporteData.ingresosTotal.toFixed(2), '']);
-          analiticoBody.push(['(-) Costos Directos', ultimoReporteData.costosTotal.toFixed(2), '']);
-          analiticoBody.push(['(-) Costos Software', ultimoReporteData.costoSoftwareTotal.toFixed(2), '']);
-          analiticoBody.push(['(-) Gastos Operativos', ultimoReporteData.gastosTotal.toFixed(2), '']);
+          
+          // Cuentas del tipo
+          ultimoReporteData.tipos[tipo].forEach(item => {
+            analiticoBody.push([
+              item.nombre,
+              item.monto.toFixed(2),
+              tipo
+            ]);
+          });
+          
+          // Subtotal
+          const subtotal = ultimoReporteData.tipos[tipo].reduce((sum, item) => sum + item.monto, 0);
           analiticoBody.push([
-            { content: 'UTILIDAD NETA', styles: { fontStyle: 'bold' } },
-            { content: ultimoReporteData.utilidad.toFixed(2), styles: { fontStyle: 'bold' } },
+            { content: `Subtotal ${tipo}`, styles: { fontStyle: 'bold' } },
+            { content: subtotal.toFixed(2), styles: { fontStyle: 'bold' } },
             ''
           ]);
-          
-          doc.autoTable({
-            startY: yPosition,
-            head: [['Cuenta', 'Monto ($)', 'Tipo']],
-            body: analiticoBody,
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [0, 51, 102] },
-            alternateRowStyles: { fillColor: [248, 249, 250] }
-          });
-          break;
+        }
       }
       
-      // Guardar el PDF
-      doc.save(`Estado_Financiero_${ultimoReporteData.tipo.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      // 🆕 RESUMEN MEJORADO
+      analiticoBody.push([{
+        content: 'RESUMEN MEJORADO',
+        colSpan: 3,
+        styles: { fillColor: [224, 224, 224], fontStyle: 'bold' }
+      }]);
+      
+      // 🆕 USAR LOS NUEVOS CAMPOS
+      analiticoBody.push(['Total Ingresos', ultimoReporteData.ingresosTotal.toFixed(2), '']);
+      analiticoBody.push(['(-) Costos Directos', ultimoReporteData.costosDirectos.toFixed(2), '']);
+      analiticoBody.push(['(-) Costos Software', ultimoReporteData.costosSoftware.toFixed(2), '']);
+      analiticoBody.push(['(-) Costos Indirectos (CIF)', ultimoReporteData.cif.toFixed(2), '']);
+      analiticoBody.push(['(-) Gastos Operativos', ultimoReporteData.gastosOperativos.toFixed(2), '']);
+      analiticoBody.push([
+        { content: 'UTILIDAD NETA REAL', styles: { fontStyle: 'bold' } },
+        { content: ultimoReporteData.utilidad.toFixed(2), styles: { fontStyle: 'bold' } },
+        ''
+      ]);
+      
+      // 🆕 COMPARATIVA DE RENTABILIDAD
+      analiticoBody.push([{
+        content: 'COMPARATIVA DE RENTABILIDAD',
+        colSpan: 3,
+        styles: { fillColor: [200, 230, 255], fontStyle: 'bold' }
+      }]);
+      
+      const utilidadEstimada = ultimoReporteData.ingresosTotal - ultimoReporteData.costosDirectos - ultimoReporteData.costosSoftware;
+      const diferencia = ultimoReporteData.cif + ultimoReporteData.gastosOperativos;
+      
+      analiticoBody.push(['Utilidad Estimada (sin CIF)', utilidadEstimada.toFixed(2), '']);
+      analiticoBody.push(['Utilidad Real (con CIF)', ultimoReporteData.utilidad.toFixed(2), '']);
+      analiticoBody.push(['Diferencia (CIF + Gastos)', diferencia.toFixed(2), '']);
+      
+      doc.autoTable({
+        startY: yPosition,
+        head: [['Cuenta', 'Monto ($)', 'Tipo']],
+        body: analiticoBody,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [0, 51, 102] },
+        alternateRowStyles: { fillColor: [248, 249, 250] },
+        // 🆕 Ajustar para mejor visualización
+        tableWidth: 'wrap',
+        margin: { top: 10 }
+      });
+      break;
+      
+    case 'analisis_costos':
+      // 🆕 PDF para Análisis de Costos (si lo implementaste)
+      doc.setFont('helvetica', 'bold');
+      doc.text('ANÁLISIS DE COSTOS POR PROYECTO', 20, yPosition);
+      yPosition += 10;
+      
+      let costosBody = [];
+      for (const proyecto in ultimoReporteData.costosPorProyecto) {
+        const costos = ultimoReporteData.costosPorProyecto[proyecto];
+        const cifPercentage = costos.directos > 0 ? (costos.indirectos / costos.directos) * 100 : 0;
+        
+        costosBody.push([
+          proyecto,
+          costos.directos.toFixed(2),
+          costos.indirectos.toFixed(2),
+          costos.total.toFixed(2),
+          cifPercentage.toFixed(2) + '%'
+        ]);
+      }
+      
+      doc.autoTable({
+        startY: yPosition,
+        head: [['Proyecto', 'Costos Directos', 'Costos Indirectos', 'Total Costos', '% CIF/Directos']],
+        body: costosBody,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [0, 51, 102] }
+      });
+      break;
+  }
+  
+  // Guardar el PDF
+  doc.save(`Estado_Financiero_${ultimoReporteData.tipo.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`);
+}
+    /////////////////////////////////////////////////////////////////////////
+// ========== ANÁLISIS DETALLADO DE COSTOS POR PROYECTO ==========
+
+async function generarAnalisisCostos() {
+  const { accounts, journals } = await loadData();
+  const fechaInicio = document.getElementById('fechaInicio').value;
+  const fechaFin = document.getElementById('fechaFin').value;
+  
+  // Obtener costos registrados
+  const costsRes = await fetch(API + '/project_costs');
+  const projectCosts = await costsRes.json();
+  
+  // Filtrar por fecha si es necesario
+  let filteredCosts = projectCosts;
+  if (fechaInicio && fechaFin) {
+    filteredCosts = projectCosts.filter(cost => 
+      cost.date >= fechaInicio && cost.date <= fechaFin
+    );
+  }
+  
+  // Agrupar costos por proyecto
+  const costByProject = {};
+  filteredCosts.forEach(cost => {
+    if (!costByProject[cost.project]) {
+      costByProject[cost.project] = { directos: 0, indirectos: 0, total: 0 };
     }
+    
+    if (cost.type === 'directo') {
+      costByProject[cost.project].directos += cost.amount;
+    } else {
+      costByProject[cost.project].indirectos += cost.amount;
+    }
+    
+    costByProject[cost.project].total += cost.amount;
+  });
+  
+  // Generar reporte
+  let html = `<h4>Análisis Detallado de Costos por Proyecto</h4>`;
+  html += `<table style="width:100%; border-collapse:collapse;">
+    <tr style="background:#003366; color:white;">
+      <th>Proyecto</th>
+      <th>Costos Directos</th>
+      <th>Costos Indirectos</th>
+      <th>Total Costos</th>
+      <th>% CIF/Directos</th>
+    </tr>`;
+  
+  for (const project in costByProject) {
+    const costs = costByProject[project];
+    const cifPercentage = costs.directos > 0 ? (costs.indirectos / costs.directos) * 100 : 0;
+    
+    html += `
+      <tr>
+        <td style="border:1px solid #ccc; padding:8px;">${project}</td>
+        <td style="border:1px solid #ccc; padding:8px;">$${costs.directos.toFixed(2)}</td>
+        <td style="border:1px solid #ccc; padding:8px;">$${costs.indirectos.toFixed(2)}</td>
+        <td style="border:1px solid #ccc; padding:8px;">$${costs.total.toFixed(2)}</td>
+        <td style="border:1px solid #ccc; padding:8px;">${cifPercentage.toFixed(2)}%</td>
+      </tr>
+    `;
+  }
+  
+  html += `</table>`;
+  document.getElementById('resultadoReporte').innerHTML = html;
+  
+  // Guardar para PDF
+  ultimoReporteData = {
+    tipo: 'Análisis de Costos por Proyecto',
+    periodo: fechaInicio ? ` del ${fechaInicio} al ${fechaFin}` : ' (Todos los períodos)',
+    costosPorProyecto: costByProject
+  };
+  ultimoReporteTipo = 'analisis_costos';
+  document.getElementById('btnPDF').style.display = 'inline-block';
+}
 
   </script>
 </body>
