@@ -487,6 +487,15 @@
       "date": "2025-11-06",
       "description": "Luz, internet, agua febrero",
       "type": "indirecto"
+    },
+    {
+      "id": "c7e0",
+      "project": "Tienda Online Moda Express",
+      "cost_category_id": "1",
+      "amount": 5000,
+      "date": "2025-11-09",
+      "description": "pago de salarios noviembre",
+      "type": "directo"
     }
   ],
   "cost_centers": [
